@@ -33,7 +33,7 @@ test.describe('R2 & R5: Audio Player in Dynamic Island & Smart Tab Auto-Pause', 
     await islandPill.click();
 
     // Verify collapse button is visible
-    const collapseBtn = page.getByTitle('Свернуть', { exact: true });
+    const collapseBtn = page.getByRole('button', { name: 'Свернуть', exact: true });
     await expect(collapseBtn).toBeVisible();
 
     // Verify first track metadata
@@ -82,7 +82,7 @@ test.describe('R2 & R5: Audio Player in Dynamic Island & Smart Tab Auto-Pause', 
 
     // Re-open and collapse via Escape key
     await page.getByRole('button', { name: 'Открыть музыкальный плеер' }).click();
-    await expect(page.getByTitle('Свернуть', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Свернуть', exact: true })).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('button', { name: 'Открыть музыкальный плеер' })).toBeVisible();
   });
@@ -92,7 +92,7 @@ test.describe('R2 & R5: Audio Player in Dynamic Island & Smart Tab Auto-Pause', 
 
     // Expand player
     await page.getByRole('button', { name: 'Открыть музыкальный плеер' }).click();
-    await expect(page.getByTitle('Свернуть', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Свернуть', exact: true })).toBeVisible();
 
     // Verify initial playing state
     await expect(page.getByRole('button', { name: 'Приостановить музыку' })).toBeVisible();

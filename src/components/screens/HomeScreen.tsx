@@ -5,7 +5,6 @@ import { vibrate, playTapSound } from '../../utils/haptics';
 import { PAGE_0_APPS, PAGE_1_APPS } from '../home/homeAppsData';
 import { AppIcon } from '../home/AppIcon';
 import { Page0Widgets, Page1Widgets } from '../home/HomeWidgets';
-import { HomeDock } from '../home/HomeDock';
 
 interface HomeScreenProps {
   onOpenApp: (app: AppId) => void;
@@ -149,11 +148,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
             }`}
           />
         ))}
-      </div>
-
-      {/* Fixed Authentic iOS Glass Dock */}
-      <div className="px-6">
-        <HomeDock onOpenApp={onOpenApp} />
       </div>
 
       {/* Easter Egg Toast Notification */}

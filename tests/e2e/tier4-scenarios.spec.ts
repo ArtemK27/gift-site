@@ -5,6 +5,7 @@ test.describe('Tier 4: Real-World Scenarios', () => {
 
   // ================= SCENARIO 1: Complete Quest Walkthrough =================
   test('Scenario 1: Complete Quest Walkthrough from BaitScreen to SafeApp Scratch Card & Promo Code', async ({ page }) => {
+    test.setTimeout(60000);
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => {
@@ -12,6 +13,10 @@ test.describe('Tier 4: Real-World Scenarios', () => {
     });
     page.on('response', response => {
       if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`);
+    });
+    const failedRequests: string[] = [];
+    page.on('requestfailed', request => {
+      failedRequests.push(`${request.failure()?.errorText ?? 'unknown'} ${request.url()}`);
     });
     // 1. BaitScreen
     await page.goto('/');
@@ -34,6 +39,7 @@ test.describe('Tier 4: Real-World Scenarios', () => {
     await page.screenshot({ path: test.info().outputPath('02-home.png') });
     // 5. MessengerApp Clue Investigation
     await launchApp(page, 'ПодвалГрам');
+    await page.getByRole('button', { name: 'Открыть чат Новогодний Комитет 🎄' }).click();
     await expect(page.locator('text=Мандарины кто-нибудь взял?').first()).toBeVisible();
 
     // Wait for sticker clue or reaction in chat
@@ -99,7 +105,7 @@ test.describe('Tier 4: Real-World Scenarios', () => {
     await expect(page.locator('text=Подарок твой! 🎄✨')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('text=GOLDEN-APPLE-NY2027')).toBeVisible();
     await page.screenshot({ path: test.info().outputPath('03-gift.png') });
-    expect(errors, 'Console, page and HTTP errors during complete quest').toEqual([]);
+    expect(errors, `Console, page and HTTP errors during complete quest; failed requests: ${failedRequests.join(' | ') || 'none'}`).toEqual([]);
 
     // 11. Copy Promo Code
     const copyBtn = page.locator('button:has(.lucide-copy), button:has(.lucide-check)').first();

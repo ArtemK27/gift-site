@@ -72,20 +72,23 @@ test.describe('Challenger R2 Verification: Bounding, Clearance, Weather Scroll &
 
     // 1. MessengerApp: input & sticker drawer
     await launchApp(page, 'ПодвалГрам');
+    await page.getByRole('button', { name: 'Открыть чат Новогодний Комитет 🎄' }).click();
     const stickerBtn = page.locator('button[aria-label="Открыть стикеры"]');
     await expect(stickerBtn).toBeVisible();
 
     // Verify sticker button is clickable and opens drawer without closing app
     await stickerBtn.click();
-    await expect(page.locator('text=Праздничные Стикеры 🎄')).toBeVisible();
+    await expect(page.getByLabel('Выбор стикера')).toBeVisible();
     await expect(page.locator('.will-change-transform')).toBeVisible();
 
-    // Verify bottom container has pb-6
-    const msgInputContainer = page.locator('button[aria-label="Открыть стикеры"]').locator('..').locator('..');
-    const msgClasses = await msgInputContainer.getAttribute('class');
-    expect(msgClasses).toContain('pb-6');
+    // Composer remains inside the viewport above the Home Indicator.
+    const send = await page.getByRole('button', { name: 'Отправить сообщение' }).boundingBox();
+    const app = await page.locator('.will-change-transform').boundingBox();
+    expect(send && app && send.x + send.width <= app.x + app.width).toBeTruthy();
 
-    // Close Messenger
+    // Only the conversation back arrow is shown inside a chat; close is on the list.
+    await expect(page.getByRole('button', { name: 'Закрыть мессенджер' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Назад к чатам' }).click();
     await page.locator('button[aria-label="Закрыть мессенджер"]').click();
     await expect(page.locator('.will-change-transform')).not.toBeVisible();
 

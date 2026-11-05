@@ -7,7 +7,7 @@ test.describe('Milestone 3: HomeScreen Pagination, Modularity & App Wiring', () 
   });
 
   // ================= 1. Page 0 Layout & Structure =================
-  test('1.1: displays Page 0 widgets, apps, dock, and pagination dots', async ({ page }) => {
+  test('1.1: displays Page 0 widgets, apps and pagination dots without dock', async ({ page }) => {
     // Widgets
     await expect(page.locator('text=31 ДЕК')).toBeVisible();
     await expect(page.locator('text=2027').first()).toBeVisible();
@@ -22,9 +22,8 @@ test.describe('Milestone 3: HomeScreen Pagination, Modularity & App Wiring', () 
     await expect(page.locator('text=Фото').first()).toBeVisible();
     await expect(page.locator('text=Настройки')).toBeVisible();
 
-    // Fixed Dock has apps
-    const dock = page.locator('.backdrop-blur-3xl');
-    await expect(dock).toBeVisible();
+    // App shortcuts live only in the grid, not in a bottom dock.
+    await expect(page.locator('[data-testid="home-dock"]')).toHaveCount(0);
 
     // 2 Pagination dots
     const dot1 = page.locator('button[aria-label="Страница 1"]');

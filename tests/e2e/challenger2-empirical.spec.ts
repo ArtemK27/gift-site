@@ -31,6 +31,7 @@ test.describe('Challenger 2: Empirical Stress & Edge Case Verification', () => {
 
     // 5. MessengerApp Clue '20'
     await launchApp(page, 'ПодвалГрам');
+    await page.getByRole('button', { name: 'Открыть чат Новогодний Комитет 🎄' }).click();
     await expect(page.locator('text=Мандарины кто-нибудь взял?').first()).toBeVisible();
 
     // Sticker clue

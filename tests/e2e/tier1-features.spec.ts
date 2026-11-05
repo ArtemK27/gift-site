@@ -136,6 +136,7 @@ test.describe('Tier 1: Feature Coverage', () => {
       await launchApp(page, 'ПодвалГрам');
       
       // Click chat messages area
+      await page.getByRole('button', { name: 'Открыть чат Новогодний Комитет 🎄' }).click();
       const chatArea = page.locator('text=Мандарины кто-нибудь взял?').first();
       await expect(chatArea).toBeVisible();
       await chatArea.click();
@@ -204,9 +205,7 @@ test.describe('Tier 1: Feature Coverage', () => {
       await launchApp(page, 'ПодвалГрам');
       await expect(page.locator('text=ПодвалГрам').first()).toBeVisible();
 
-      const backBtn = page.locator('button[aria-label="Назад к чатам"]');
-      await expect(backBtn).toBeVisible();
-      await backBtn.click();
+      await page.getByRole('button', { name: 'Закрыть мессенджер' }).click();
 
       // Returned to HomeScreen
       await expect(page.locator('text=Квест Сейфа')).toBeVisible({ timeout: 5000 });

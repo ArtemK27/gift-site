@@ -94,7 +94,7 @@ test.describe('Tier 3: Cross-Feature Combinations', () => {
 
       // Should open directly into Messenger
       await expect(page.locator('text=ПодвалГрам').first()).toBeVisible({ timeout: 10000 });
-      await expect(page.locator('text=Мандарины кто-нибудь взял?').first()).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Открыть чат Новогодний Комитет 🎄' })).toBeVisible();
     });
 
     test('3.3.2: tapping Security notification navigates directly into SafeApp', async ({ page }) => {

@@ -67,13 +67,13 @@ test('expanded music overlays content without moving icons; home gesture clears 
     })).toBeLessThan(0.0001);
     const before = await settings.boundingBox();
     await page.getByRole('button', { name: 'Открыть музыкальный плеер' }).click();
-    await expect(page.getByTitle('Свернуть', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Свернуть', exact: true })).toBeVisible();
     const after = await settings.boundingBox();
     expect(after!.y).toBeCloseTo(before!.y, 0);
     await expect(settings).toBeInViewport({ ratio: 1 });
     const indicator = await page.locator('#ios-home-indicator').boundingBox();
     expect(viewport.height - indicator!.y - indicator!.height).toBeGreaterThanOrEqual(20);
-    await page.getByTitle('Свернуть', { exact: true }).click();
+    await page.getByRole('button', { name: 'Свернуть', exact: true }).click();
     await settings.click();
     await expect(page.getByRole('button', { name: 'Закрыть настройки', exact: true })).toBeVisible();
     await page.locator('#ios-home-indicator').click();
@@ -98,11 +98,25 @@ test('music remains visible and operable after app exits with expanded and compa
         return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
       })).toBe(true);
     }
-    if (!expanded) await page.getByRole('button', { name: 'Открыть музыкальный плеер' }).click();
-    await page.getByRole('button', { name: 'Приостановить музыку' }).click();
-    await expect(page.getByRole('button', { name: 'Включить музыку' })).toBeVisible();
-    await page.getByRole('button', { name: 'Включить музыку' }).click();
-    await page.getByTitle('Свернуть', { exact: true }).click();
+    // Home Indicator is outside the island and may collapse it; reopen before testing controls.
+    const compactPlayer = page.getByRole('button', { name: 'Открыть музыкальный плеер' });
+    if (await compactPlayer.isVisible()) await compactPlayer.click();
+    const pause = page.getByRole('button', { name: 'Приостановить музыку' });
+    const play = page.getByRole('button', { name: 'Включить музыку' });
+    if (await pause.isVisible()) {
+      await pause.click();
+      await expect(play).toBeVisible();
+      await play.click();
+      await expect(pause).toBeVisible();
+    } else {
+      await expect(play).toBeVisible();
+      await play.click();
+      await expect(pause).toBeVisible();
+      await pause.click();
+      await expect(play).toBeVisible();
+    }
+    await page.getByRole('button', { name: 'Свернуть', exact: true }).click();
+    await expect(compactPlayer).toBeVisible();
     await expect(page.getByRole('button', { name: 'Открыть музыкальный плеер' })).toBeVisible();
   }
 });

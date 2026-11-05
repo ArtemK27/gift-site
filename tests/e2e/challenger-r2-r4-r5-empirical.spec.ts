@@ -48,7 +48,7 @@ test.describe('Challenger R2, R4, R5 Empirical Verification Suite', () => {
     await expect(islandPill).toBeVisible();
     await islandPill.click();
 
-    const collapseBtn = page.getByTitle('Свернуть', { exact: true });
+    const collapseBtn = page.getByRole('button', { name: 'Свернуть', exact: true });
     await expect(collapseBtn).toBeVisible();
 
     const prevBtn = page.getByRole('button', { name: 'Предыдущий трек' });
@@ -89,7 +89,7 @@ test.describe('Challenger R2, R4, R5 Empirical Verification Suite', () => {
     const islandPill = page.getByRole('button', { name: 'Открыть музыкальный плеер' });
     await islandPill.click();
 
-    const collapseBtn = page.getByTitle('Свернуть', { exact: true });
+    const collapseBtn = page.getByRole('button', { name: 'Свернуть', exact: true });
     await expect(collapseBtn).toBeVisible();
 
     const prevBtn = page.getByRole('button', { name: 'Предыдущий трек' });
@@ -143,7 +143,7 @@ test.describe('Challenger R2, R4, R5 Empirical Verification Suite', () => {
 
     // Expand player to observe state
     await page.getByRole('button', { name: 'Открыть музыкальный плеер' }).click();
-    await expect(page.getByTitle('Свернуть', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Свернуть', exact: true })).toBeVisible();
 
     // Initially playing
     await expect(page.getByRole('button', { name: 'Приостановить музыку' })).toBeVisible();

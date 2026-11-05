@@ -14,6 +14,7 @@ import { ClockApp } from './components/apps/ClockApp';
 import { WeatherApp } from './components/apps/WeatherApp';
 import { SettingsProvider } from './context/SettingsContext';
 import { AudioProvider } from './context/AudioContext';
+import { MessengerProvider, useMessenger } from './context/MessengerContext';
 import { primeAudioContext } from './utils/haptics';
 
 // iOS App Window Wrapper with iOS 18 spring physics
@@ -44,6 +45,7 @@ const AppWindow: React.FC<{
 const MainAppContent: React.FC = () => {
   const [screen, setScreen] = useState<ScreenType>('bait');
   const [activeApp, setActiveApp] = useState<AppId>(null);
+  const { openThread } = useMessenger();
 
   // Prime Web Audio API on first user interaction
   useEffect(() => {
@@ -83,6 +85,7 @@ const MainAppContent: React.FC = () => {
   };
 
   const handleCloseApp = () => {
+    if (activeApp === 'messenger') openThread(null);
     setActiveApp(null);
   };
 
@@ -183,7 +186,9 @@ export const App: React.FC = () => {
   return (
     <SettingsProvider>
       <AudioProvider>
-        <MainAppContent />
+        <MessengerProvider>
+          <MainAppContent />
+        </MessengerProvider>
       </AudioProvider>
     </SettingsProvider>
   );
