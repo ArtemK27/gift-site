@@ -24,6 +24,20 @@ body {
   touch-action: manipulation;
 }
 
+/* Keep our home gesture above the browser/OS gesture edge on touch screens.
+   dvh follows browser chrome; safe-area adds clearance in standalone iOS mode. */
+@media (max-width: 639px) {
+  .phone-stage {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 640px) {
+  .phone-stage > [data-testid='phone-chassis'] {
+    transform: translateY(-20px);
+  }
+}
+
 /* Hide scrollbars for clean native app look */
 ::-webkit-scrollbar {
   display: none;

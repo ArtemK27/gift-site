@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Play, Pause, Disc3, Sparkles, Volume2, ChevronUp } from 'lucide-react';
 import { vibrate, playTapSound } from '../utils/haptics';
 
@@ -9,6 +9,19 @@ interface DynamicIslandProps {
 
 export const DynamicIsland: React.FC<DynamicIslandProps> = ({ className = '' }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (!isExpanded) return;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsExpanded(false);
+        requestAnimationFrame(() => document.querySelector<HTMLElement>('[aria-label="Открыть музыкальный плеер"]')?.focus());
+      }
+    };
+    window.addEventListener('keydown', dismiss);
+    return () => window.removeEventListener('keydown', dismiss);
+  }, [isExpanded]);
   const [isPlaying, setIsPlaying] = useState(true);
   const [trackProgress, setTrackProgress] = useState(42);
   const audioLoopRef = useRef<number | null>(null);
@@ -90,9 +103,11 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ className = '' }) 
   };
 
   return (
-    <div data-testid="dynamic-island" className={`relative z-50 shrink-0 flex justify-center w-full px-4 pt-2 select-none ${className}`}>
+    // Reserve only the compact pill's space: expansion must never resize the apps below.
+    <div data-testid="dynamic-island" className={`relative z-50 shrink-0 h-10 w-full select-none ${className}`}>
+      <div className="absolute top-2 left-4 right-4 flex justify-center pointer-events-none">
       <motion.div
-        layout
+        layout={!reducedMotion}
         role={!isExpanded ? 'button' : undefined}
         tabIndex={!isExpanded ? 0 : undefined}
         aria-label={!isExpanded ? 'Открыть музыкальный плеер' : undefined}
@@ -103,13 +118,13 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ className = '' }) 
           }
         } : undefined}
         onClick={!isExpanded ? toggleExpand : undefined}
-        transition={{
+        transition={reducedMotion ? { duration: 0 } : {
           type: 'spring',
           stiffness: 420,
           damping: 30,
           mass: 0.8,
         }}
-        className={`bg-black/95 backdrop-blur-2xl border border-white/15 text-white shadow-[0_12px_40px_rgba(0,0,0,0.85)] cursor-pointer overflow-hidden transition-colors ${
+        className={`pointer-events-auto max-w-full bg-black/95 backdrop-blur-2xl border border-white/15 text-white shadow-[0_12px_40px_rgba(0,0,0,0.85)] cursor-pointer overflow-hidden transition-colors ${
           isExpanded
             ? 'w-[370px] rounded-[32px] p-4 border-white/20'
             : 'h-8 px-3.5 rounded-full flex items-center justify-between gap-3 hover:border-white/30'
@@ -151,7 +166,7 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ className = '' }) 
         ) : (
           // Expanded Player View
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={reducedMotion ? false : { opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
@@ -257,6 +272,7 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ className = '' }) 
           </motion.div>
         )}
       </motion.div>
+      </div>
     </div>
   );
 };

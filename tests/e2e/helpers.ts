@@ -5,7 +5,7 @@ import { Page, expect } from '@playwright/test';
  * and unlocking the LockScreen.
  */
 export async function unlockToHomeScreen(page: Page) {
-  await page.goto('/');
+  await page.goto('./');
   
   // Wait for BaitScreen
   const openButton = page.locator('text=Открыть поздравление');

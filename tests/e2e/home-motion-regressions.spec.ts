@@ -54,6 +54,33 @@ test('short drag snaps back; dots and viewport resize retain the selected page',
   await expect.poll(() => position(page)).toBeCloseTo(-390, 0);
 });
 
+test('expanded music overlays content without moving icons; home gesture clears the screen edge', async ({ page }) => {
+  await unlockToHomeScreen(page);
+  for (const viewport of [{ width: 430, height: 932 }, { width: 360, height: 700 }]) {
+    await page.setViewportSize(viewport);
+    const settings = page.locator('[aria-label="Настройки"]').first();
+    // Finish the existing SpringBoard entrance before comparing screen coordinates.
+    await expect.poll(() => settings.evaluate(el => {
+      const own = new DOMMatrixReadOnly(getComputedStyle(el).transform).a;
+      const screen = el.closest('[data-testid="home-pages"]')!.parentElement!.parentElement!.parentElement!;
+      return Math.abs(own - 1) + Math.abs(new DOMMatrixReadOnly(getComputedStyle(screen).transform).a - 1);
+    })).toBeLessThan(0.0001);
+    const before = await settings.boundingBox();
+    await page.getByRole('button', { name: 'Открыть музыкальный плеер' }).click();
+    await expect(page.getByTitle('Свернуть', { exact: true })).toBeVisible();
+    const after = await settings.boundingBox();
+    expect(after!.y).toBeCloseTo(before!.y, 0);
+    await expect(settings).toBeInViewport({ ratio: 1 });
+    const indicator = await page.locator('#ios-home-indicator').boundingBox();
+    expect(viewport.height - indicator!.y - indicator!.height).toBeGreaterThanOrEqual(20);
+    await page.getByTitle('Свернуть', { exact: true }).click();
+    await settings.click();
+    await expect(page.getByRole('button', { name: 'Закрыть настройки', exact: true })).toBeVisible();
+    await page.locator('#ios-home-indicator').click();
+    await expect(page.getByRole('button', { name: 'Закрыть настройки', exact: true })).not.toBeVisible();
+  }
+});
+
 test('music remains visible and operable after app exits with expanded and compact player', async ({ page }) => {
   await unlockToHomeScreen(page);
   const island = page.getByTestId('dynamic-island');
@@ -62,7 +89,9 @@ test('music remains visible and operable after app exits with expanded and compa
     for (const [name, close] of [['Настройки', 'Закрыть настройки'], ['ПодвалГрам', 'Закрыть мессенджер'], ['VIP Сейф', 'Закрыть сейф']]) {
       await launchApp(page, name);
       if (name === 'ПодвалГрам') await page.waitForTimeout(3800);
-      await page.getByRole('button', { name: close, exact: true }).click();
+      // Expanded iOS-style player covers the top navigation, not the home gesture.
+      if (expanded) await page.locator('#ios-home-indicator').click();
+      else await page.getByRole('button', { name: close, exact: true }).click();
       await expect(island).toBeInViewport({ ratio: 1 });
       await expect.poll(() => island.evaluate(el => {
         const r = el.getBoundingClientRect();

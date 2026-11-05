@@ -17,49 +17,36 @@ export const PhoneShell: React.FC<PhoneShellProps> = ({
   onHomePress,
   showDynamicIsland = true,
 }) => {
-  const touchStartY = React.useRef(0);
-  const touchStartTime = React.useRef(0);
+  const gesture = React.useRef<{ id: number; x: number; y: number; time: number } | null>(null);
   const lastSwipeTime = React.useRef(0);
 
-  const handleIndicatorTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-    touchStartTime.current = Date.now();
+  const handleIndicatorPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!e.isPrimary || e.button !== 0) return;
+    gesture.current = { id: e.pointerId, x: e.clientX, y: e.clientY, time: Date.now() };
+    // Keep receiving the release after the finger/mouse leaves the 32px strip.
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
-  const handleIndicatorTouchEnd = (e: React.TouchEvent) => {
-    const deltaY = touchStartY.current - e.changedTouches[0].clientY; // positive = upward
-    const deltaTime = Date.now() - touchStartTime.current;
-    const velocity = deltaY / Math.max(1, deltaTime);
-
-    if (deltaY > 25 || (deltaY > 15 && velocity > 0.25)) {
-      lastSwipeTime.current = Date.now();
-      if (activeApp) {
-        vibrate(25);
-        playTapSound(420, 0.04);
-        onHomePress();
-      }
+  const handleIndicatorPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = gesture.current;
+    if (!start || start.id !== e.pointerId) return;
+    gesture.current = null;
+    const dy = start.y - e.clientY;
+    const dx = Math.abs(start.x - e.clientX);
+    const velocity = dy / Math.max(1, Date.now() - start.time);
+    // A drag must not become an accidental click, including sideways/downward drags.
+    if (Math.max(Math.abs(dy), dx) > 8) lastSwipeTime.current = Date.now();
+    if (dy > dx && (dy > 25 || (dy > 15 && velocity > 0.25)) && activeApp) {
+      vibrate(25);
+      playTapSound(420, 0.04);
+      onHomePress();
     }
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
-  const handleIndicatorPointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === 'mouse') {
-      touchStartY.current = e.clientY;
-      touchStartTime.current = Date.now();
-    }
-  };
-
-  const handleIndicatorPointerUp = (e: React.PointerEvent) => {
-    if (e.pointerType === 'mouse') {
-      const deltaY = touchStartY.current - e.clientY;
-      if (deltaY > 25) {
-        lastSwipeTime.current = Date.now();
-        if (activeApp) {
-          vibrate(25);
-          playTapSound(420, 0.04);
-          onHomePress();
-        }
-      }
-    }
+  const handleIndicatorPointerCancel = () => {
+    if (gesture.current) lastSwipeTime.current = Date.now();
+    gesture.current = null;
   };
 
   const handleIndicatorClick = (e: React.MouseEvent) => {
@@ -73,12 +60,12 @@ export const PhoneShell: React.FC<PhoneShellProps> = ({
   };
 
   return (
-    <div className="w-full h-[100dvh] sm:p-6 flex items-center justify-center bg-[#010103] overflow-hidden select-none">
+    <div className="phone-stage w-full h-[100dvh] sm:p-6 flex items-center justify-center bg-[#010103] overflow-hidden select-none">
       {/* Outer ambient desktop glow */}
       <div className="absolute w-[540px] h-[860px] rounded-full bg-gradient-to-tr from-rose-950/20 via-sky-950/15 to-purple-950/20 blur-3xl pointer-events-none" />
 
       {/* iOS Device Chassis: Authentic iPhone 16 Pro frame */}
-      <div className="w-full h-[100dvh] rounded-none border-0 sm:w-[430px] sm:h-[min(932px,calc(100dvh-48px))] sm:rounded-[56px] sm:border-[10px] sm:border-[#232328] sm:ring-1 sm:ring-white/10 sm:shadow-[0_25px_80px_rgba(0,0,0,0.9)] mx-auto relative overflow-hidden bg-[#000000] flex flex-col justify-between">
+      <div data-testid="phone-chassis" className="w-full h-full rounded-none border-0 sm:w-[430px] sm:h-[min(932px,calc(100dvh-48px))] sm:rounded-[56px] sm:border-[10px] sm:border-[#232328] sm:ring-1 sm:ring-white/10 sm:shadow-[0_25px_80px_rgba(0,0,0,0.9)] mx-auto relative overflow-hidden bg-[#000000] flex flex-col justify-between">
         
         {/* Subtle speaker ear grill at the very top bezel */}
         <div className="hidden sm:block absolute top-2.5 left-1/2 -translate-x-1/2 w-14 h-1 bg-zinc-800 rounded-full z-50 pointer-events-none" />
@@ -122,10 +109,10 @@ export const PhoneShell: React.FC<PhoneShellProps> = ({
         {/* Single Persistent iOS Home Indicator Bar with interactive swipe gesture */}
         <div
           id="ios-home-indicator"
-          onTouchStart={handleIndicatorTouchStart}
-          onTouchEnd={handleIndicatorTouchEnd}
           onPointerDown={handleIndicatorPointerDown}
           onPointerUp={handleIndicatorPointerUp}
+          onPointerCancel={handleIndicatorPointerCancel}
+          onLostPointerCapture={handleIndicatorPointerCancel}
           onClick={handleIndicatorClick}
           aria-label="Закрыть приложение и вернуться на рабочий стол"
           className="absolute bottom-0 left-0 right-0 h-8 z-50 pointer-events-auto touch-none flex items-center justify-center cursor-pointer group active:opacity-60"
