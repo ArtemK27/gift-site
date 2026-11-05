@@ -115,7 +115,7 @@ export const PhoneShell: React.FC<PhoneShellProps> = ({
         {showDynamicIsland && <DynamicIsland />}
 
         {/* Main Viewport Content Area */}
-        <div className="relative z-20 flex-1 w-full overflow-hidden flex flex-col pb-8">
+        <div className="relative z-20 flex-1 min-h-0 w-full overflow-hidden flex flex-col pb-8">
           {children}
         </div>
 

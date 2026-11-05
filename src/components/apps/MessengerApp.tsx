@@ -93,7 +93,9 @@ export const MessengerApp: React.FC<MessengerAppProps> = ({ onBack }) => {
   ];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll only the chat, never hidden overflow ancestors in the phone shell.
+    const container = messagesEndRef.current?.parentElement;
+    container?.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
   };
 
   useEffect(() => {

@@ -90,9 +90,18 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ className = '' }) 
   };
 
   return (
-    <div className={`relative z-50 flex justify-center w-full px-4 pt-2 select-none ${className}`}>
+    <div data-testid="dynamic-island" className={`relative z-50 shrink-0 flex justify-center w-full px-4 pt-2 select-none ${className}`}>
       <motion.div
         layout
+        role={!isExpanded ? 'button' : undefined}
+        tabIndex={!isExpanded ? 0 : undefined}
+        aria-label={!isExpanded ? 'Открыть музыкальный плеер' : undefined}
+        onKeyDown={!isExpanded ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsExpanded(true);
+          }
+        } : undefined}
         onClick={!isExpanded ? toggleExpand : undefined}
         transition={{
           type: 'spring',
@@ -221,6 +230,7 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ className = '' }) 
               {/* Play / Pause button */}
               <button
                 onClick={togglePlay}
+                aria-label={isPlaying ? 'Приостановить музыку' : 'Включить музыку'}
                 className="w-11 h-11 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform flex-shrink-0 shadow-lg shadow-white/20"
               >
                 {isPlaying ? (

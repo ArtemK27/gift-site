@@ -2,6 +2,17 @@
 
 > **Для кого этот файл:** Этот документ создан для разработчика или любой языковой модели (ИИ), которая продолжит доработку или аудит проекта в новой сессии. Здесь собрана вся архитектура, назначение каждого файла, спецификации жестов и состояний, логика квеста, готовые модули и список задач для будущих доработок.
 
+## Точка входа для следующей сессии — 2026-11-05
+
+- **Сайт:** https://artemk27.github.io/gift-site/ ; **репозиторий:** https://github.com/ArtemK27/gift-site . Сборка опубликована в существующую ветку `gh-pages`; исходники и документы ведутся в `main`.
+- **Принято пользователем:** свайпы предварительно одобрены на ПК; отдельное положение музыкального пузырька принято — он больше не пропадает. Не возвращать прежнюю компоновку без запроса. Проверка настоящим телефоном остаётся открытой.
+- **Изменения кода:** HomeScreen использует единый пиксельный MotionValue для жеста и spring-доводки, ResizeObserver и reduced motion; DynamicIsland защищён от flex-сжатия; PhoneShell ограничивает контент min-h-0; MessengerApp прокручивает только чат вместо scrollIntoView предков. Исходное исчезновение пузырька до правок не воспроизвелось, первопричина не доказана.
+- **Текущая проверка:** TypeScript/Vite build проходит с предупреждением JS chunk 534.34 kB. Свежий прогон трёх целевых E2E-наборов — 26/26 PASS. На опубликованном сайте обычным Playwright Chromium при 430×932 пройден квест от открытки до подарка и проверен плеер после выхода из мессенджера; console.error/pageerror/HTTP ≥400 не обнаружены.
+- **Не считать закрытым:** ранее были нестабильные падения теста промежуточных кадров свайпа и шага стикера/«20»; полный комплект E2E сегодня не запускался. MCP Playwright не запускается из-за отсутствующего настроенного Chrome. PNG сохранены, но инструмент просмотра вернул forbidden path: визуальная приёмка и подозрение обрезки остаются открытыми. Chromium с iPhone user agent — не Safari.
+- **Дальше:** получить приёмку на настоящем телефоне по ссылке; отдельно разбирать замечания только в согласованном объёме. [REVIEW_NOTES.md](./REVIEW_NOTES.md) — попутные замечания, не полный аудит; [TEST_READY.md](./TEST_READY.md) — команды и честные границы проверок. Старые цифры 44/44 и 104/104 не являются текущим QA-результатом.
+- **Публикация:** `npm run deploy` собирает dist и публикует через gh-pages CLI без force push, с `.nojekyll`; права записи в origin обязательны. Не использовать прежний PowerShell-скрипт. Локальные `.sharrowkin/`, `before-home.png`, test-results и dist игнорируются Git. Не сохранять токены/секреты в документах.
+- **Подарочные коды:** демонстрационные строки в клиенте, действительность не подтверждена. ПИН 2027 — механика игры, не механизм защиты секретов.
+
 ---
 
 ## 🎄 1. О проекте (Контекст и Концепция)
@@ -74,7 +85,7 @@ Gift-site/
 | [`src/context/SettingsContext.tsx`](file:///d:/My%20creation/programming/Antigravity/TEST/Gift-site/src/context/SettingsContext.tsx) | **Глобальное реактивное состояние настроек.** Управляет флагами `soundEnabled`, `hapticsEnabled`, выбранной темой обоев `wallpaper` и сбросом квеста `resetQuestProgress()`. Автоматически синхронизирует состояние с `localStorage` (`ios18_gift_settings`) и модулем `haptics.ts`. |
 | [`src/utils/haptics.ts`](file:///d:/My%20creation/programming/Antigravity/TEST/Gift-site/src/utils/haptics.ts) | **Аудио- и тактильный движок.** Автономный синтезатор Web Audio API: щелчки клавиш (`playKeypadTone`), тапы (`playTapSound`), входящие сообщения (`playMessageSound`), треск льда (`playScratchSound`), победные фанфары (`playVictoryFanfare`), системный глитч (`playGlitchSound`). Модульные флаги `soundEnabled` и `hapticsEnabled` читаются мгновенно без ререндеров React. Функция `primeAudioContext()` для бесшовной разблокировки звука. |
 | [`src/components/PhoneShell.tsx`](file:///d:/My%20creation/programming/Antigravity/TEST/Gift-site/src/components/PhoneShell.tsx) | **Каркас смартфона iOS.** Отрисовывает статус-бар (`23:59`, связь, Wi-Fi, 99% батареи с заливкой), Dynamic Island и изолированный контейнер Home Indicator (`#ios-home-indicator`) с обработкой свайпа вверх (`deltaY > 25`). Обеспечивает адаптивное шасси (edge-to-edge mobile / centered desktop mockup). |
-| [`src/components/screens/HomeScreen.tsx`](file:///d:/My%20creation/programming/Antigravity/TEST/Gift-site/src/components/screens/HomeScreen.tsx) | **Рабочий стол (SpringBoard).** Модульный контейнер (<150 строк) с поддержкой горизонтального перелистывания страниц (Page 0 и Page 1) через `framer-motion` drag gestures, синхронизированными точками пагинации, виджетами и доком. |
+| [`src/components/screens/HomeScreen.tsx`](file:///d:/My%20creation/programming/Antigravity/TEST/Gift-site/src/components/screens/HomeScreen.tsx) | **Рабочий стол (SpringBoard).** Модульный контейнер с поддержкой горизонтального перелистывания страниц (Page 0 и Page 1) через `framer-motion` pan gestures и единый пиксельный MotionValue, синхронизированными точками пагинации, виджетами и доком. |
 | [`src/components/home/HomeWidgets.tsx`](file:///d:/My%20creation/programming/Antigravity/TEST/Gift-site/src/components/home/HomeWidgets.tsx) | **Виджеты рабочего стола.** `Page0Widgets`: Календарь-таймер до 2027 года и интерактивный статус квеста сейфа. `Page1Widgets`: Живые часы пентхауса Сану (GMT+9) и погодный инсайт атмосферы новогодней ночи. |
 | [`src/components/home/AppIcon.tsx`](file:///d:/My%20creation/programming/Antigravity/TEST/Gift-site/src/components/home/AppIcon.tsx) | **Сквиркл-иконка приложения.** Аутентичная геометрия iOS с градиентами, легким spring-масштабированием при нажатии (`whileTap={{ scale: 0.90 }}`), бейджами непрочитанных сообщений/статусов и поддержкой режима дока (`size="dock"`). |
 | [`src/components/home/HomeDock.tsx`](file:///d:/My%20creation/programming/Antigravity/TEST/Gift-site/src/components/home/HomeDock.tsx) | **Плавающий стеклянный док iOS.** Закрепленная панель `backdrop-blur-3xl` в нижней части рабочего стола с быстрыми ссылками на ключевые приложения (ПодвалГрам, Сейф, Заметки). |
@@ -126,7 +137,7 @@ Gift-site/
 
 ### 3.4. Пагинация рабочего стола SpringBoard
 - Контейнер страниц в `HomeScreen.tsx` поддерживает горизонтальный свайп через `framer-motion`:
-  - `drag="x"`, `dragConstraints={{ left: 0, right: 0 }}`, `dragElastic={0.2}`.
+  - `onPanStart/onPan/onPanEnd` управляют одним пиксельным `MotionValue x`; страницы следуют за пальцем, затем `animate(x, target)` доводит их пружиной. Сопротивление `0.2` действует только на внешних краях. Ширина синхронизируется через ResizeObserver, доводка учитывает prefers-reduced-motion.
   - Порог переключения страницы: `info.offset.x < -45 || info.velocity.x < -250` (на страницу 1) и `info.offset.x > 45 || info.velocity.x > 250` (на страницу 0).
   - Синхронизированные кликабельные точки внизу (Dots) плавно анимируют активный индикатор (`w-2 h-2 bg-white` vs `w-1.5 h-1.5 bg-white/35`).
 
@@ -143,7 +154,7 @@ Gift-site/
   - `setSoundEnabled(enabled: boolean)` — переключение звука;
   - `setHapticsEnabled(enabled: boolean)` — переключение вибрации;
   - `setWallpaper(wallpaper: WallpaperId)` — смена обоев;
-  - `resetQuestProgress()` — безопасный сброс ключей квеста в `localStorage` без стирания настроек звука/вибро.
+  - `resetQuestProgress()` — текущая реализация удаляет ключи localStorage origin, кроме настроек; это слишком широкий сброс и не сбрасывает локальные useState приложений. Требуется отдельная доработка (см. REVIEW_NOTES.md).
 - **Персистентность:** Все изменения мгновенно сериализуются в `localStorage` по ключу `ios18_gift_settings`.
 
 ### 4.2. Модульные флаги синхронизации в `haptics.ts`
@@ -186,7 +197,7 @@ Gift-site/
                                  🍏 «Золотое Яблоко» или 📦 «Ozon»
                                        │
                                  Модальное окно с промокодом:
-                                 GOLDEN-APPLE-NY2027 / OZON-GIFT-NY2027
+                                 GOLDEN-APPLE-NY2027 / OZON-MAGIC-NY2027 (демонстрационные строки)
 ```
 
 ### 🗝️ ПИН-код от Сейфа: `2027`
@@ -223,9 +234,9 @@ Gift-site/
 
 ## 💻 7. Технический стек и команды разработки
 
-- **Стек:** React 19, TypeScript 5.7, Vite 6.2, Tailwind CSS 3.4, `framer-motion` 12, `lucide-react`, `canvas-confetti`.
+- **Стек:** React 19, TypeScript, Vite 6, Tailwind CSS 3, `framer-motion` 12, `lucide-react`, `canvas-confetti`; публикация через `gh-pages` 6. Точные установленные версии — package-lock.json; последняя сборка выполнена Vite 6.4.5.
 - **E2E Тестирование:** Playwright (профили `mobile-iphone-16-pro` 430x932 и `desktop-mockup` 1280x800).
-- **Конфигурация сборки:** `vite.config.ts` содержит `base: './'`, гарантируя корректность относительных путей для GitHub Pages и локального открытия.
+- **Конфигурация сборки:** `vite.config.ts` содержит `base: './'` для относительных путей сборки на GitHub Pages. Локально использовать dev/preview HTTP-сервер, а не открывать index.html через file://.
 
 ### Команды терминала:
 > ⚠️ **Для Windows PowerShell:** Если `npm` блокируется политикой скриптов, используйте `npm.cmd` или `npx.cmd`.
@@ -258,6 +269,7 @@ npm.cmd run deploy
 ## 🏆 8. Статус реализации и верификация (QA & Health Status)
 
 - **Avatar Layout Fix (`SettingsApp.tsx:153`):** Исправлен невалидный класс `w-15 h-15` на стандартизированный `w-14 h-14` (56px). Контейнер аватара надежно ограничен по ширине и высоте, предотвращая искажение сетки и скрытие информации о владельце устройства («О Сану»).
-- **TypeScript & Build:** Сборка `npm run build` проходит без предупреждений и ошибок (Exit code 0).
-- **E2E Test Suites:** 44 теста из наборов `tier1-features`, `tier2-boundary`, `tier3-combinations`, `tier4-scenarios`, `milestone3-homescreen-apps` и `challenger2-empirical` завершаются с результатом 100% PASS.
+- **TypeScript & Build (2026-11-05):** PASS, Exit code 0; остаётся предупреждение о JS chunk >500 kB (534.34 kB до gzip).
+- **E2E (2026-11-05):** 26/26 PASS: home-motion-regressions, milestone3-homescreen-apps, tier4-scenarios на двух профилях. Полный каталог не запускался; прежние падения свайпа/стикера не считать окончательно устранёнными одним прогоном. Подробности и ограничения — TEST_READY.md.
+- **Опубликованная сборка:** index-VNvkjWpg.js, проверены HTTP 200 и полный квест при 430×932, ошибок консоли/страницы/HTTP ≥400 не обнаружено. Визуальная приёмка и реальное устройство не проверены.
 - **Целостность эмоционального контента:** Все пасхалки, подсказки квеста, рецепты Чу Ваньнина, райдер VIPERR, сейф `2027` и призы сохранены в неизменном виде.

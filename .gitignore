@@ -27,4 +27,7 @@ Thumbs.db
 
 # Agent & Test artifacts
 .agents/
+.sharrowkin/
 test-results/
+playwright-report/
+/before-home.png
