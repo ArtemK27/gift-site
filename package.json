@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "tsc && vite build && powershell -Command \"Push-Location dist; git init; git config user.name ArtemK27; git config user.email ArtemK27@users.noreply.github.com; git checkout -B gh-pages; git add -A; git commit -m 'Deploy update'; git push -f origin gh-pages; Remove-Item -Recurse -Force .git; Pop-Location\""
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
