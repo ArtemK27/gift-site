@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Heart, AlertTriangle, Terminal } from 'lucide-react';
-import { vibrate, requestFullscreenMode, playGlitchSound, playTapSound } from '../../utils/haptics';
+import { vibrate, playGlitchSound, playTapSound } from '../../utils/haptics';
 
 interface BaitScreenProps {
   onUnlockStart: () => void;
@@ -12,7 +12,6 @@ export const BaitScreen: React.FC<BaitScreenProps> = ({ onUnlockStart }) => {
   const [glitchPhase, setGlitchPhase] = useState(0);
 
   const handleOpenGift = () => {
-    requestFullscreenMode();
     vibrate([40, 60, 40, 100, 200]);
     playGlitchSound();
     setIsGlitching(true);

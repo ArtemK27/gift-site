@@ -101,17 +101,32 @@ export const GalleryApp: React.FC<GalleryAppProps> = ({ onBack }) => {
             playTapSound(400, 0.04);
             onBack();
           }}
+          aria-label="Закрыть галерею"
           className="flex items-center gap-0.5 text-[#007aff] text-base font-normal active:opacity-60"
         >
           <ChevronLeft className="w-6 h-6 -ml-1 stroke-[2.2]" />
           <span>Альбомы</span>
         </button>
 
-        <span className="text-sm font-bold tracking-tight">Новый Год 2027</span>
+        <span className="text-sm font-bold tracking-tight">Новогодний Альбом 2027</span>
 
-        <button className="text-[#007aff] text-sm font-medium active:opacity-60">
-          Выбрать
-        </button>
+        <div className="flex items-center gap-2">
+          <button className="text-[#007aff] text-sm font-medium active:opacity-60">
+            Выбрать
+          </button>
+          <button
+            onClick={() => {
+              vibrate(15);
+              playTapSound(400, 0.04);
+              onBack();
+            }}
+            aria-label="Закрыть фото"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center text-white/80 transition-all ml-1"
+            title="Закрыть приложение"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Segmented Filter Pills */}
@@ -137,7 +152,7 @@ export const GalleryApp: React.FC<GalleryAppProps> = ({ onBack }) => {
       </div>
 
       {/* Main Photos Grid with Date Headers */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 overscroll-contain">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 overscroll-contain touch-pan-y">
         {/* Date Group Header */}
         <div>
           <div className="flex items-baseline justify-between mb-1">

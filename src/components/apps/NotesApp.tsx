@@ -14,6 +14,7 @@ import {
   PenTool,
   SquarePen,
   Key,
+  X,
 } from 'lucide-react';
 import { NoteItem } from '../../types';
 import { vibrate, playTapSound } from '../../utils/haptics';
@@ -110,13 +111,14 @@ export const NotesApp: React.FC<NotesAppProps> = ({ onBack }) => {
               onBack();
             }
           }}
+          aria-label="Назад к списку"
           className="flex items-center gap-0.5 text-[#ffd60a] text-base font-normal active:opacity-60 transition-opacity"
         >
           <ChevronLeft className="w-6 h-6 -ml-1 stroke-[2.2]" />
           <span>{activeNoteId ? 'Заметки' : 'Папки'}</span>
         </button>
 
-        <div className="flex items-center gap-3 text-[#ffd60a]">
+        <div className="flex items-center gap-2 text-[#ffd60a]">
           <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-[#ffd60a]/15 text-[#ffd60a] border border-[#ffd60a]/30 flex items-center gap-1">
             <Key className="w-3 h-3" />
             Код: ?? 27
@@ -127,11 +129,23 @@ export const NotesApp: React.FC<NotesAppProps> = ({ onBack }) => {
           <button className="p-1 rounded-full active:opacity-60">
             <MoreHorizontal className="w-5 h-5" />
           </button>
+          <button
+            onClick={() => {
+              vibrate(20);
+              playTapSound(400, 0.04);
+              onBack();
+            }}
+            aria-label="Закрыть заметки"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center text-white/80 transition-all ml-1"
+            title="Закрыть приложение"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
       {/* Main View Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-2 overscroll-contain">
+      <div className="flex-1 overflow-y-auto px-4 py-2 overscroll-contain touch-pan-y">
         <AnimatePresence mode="wait">
           {!activeNote ? (
             // ================= iOS NOTES LIST VIEW =================

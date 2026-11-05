@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   CreditCard,
   Flame,
+  X,
 } from 'lucide-react';
 import { vibrate, playTapSound, playUnlockSound, playScratchSound } from '../../utils/haptics';
 
@@ -218,23 +219,37 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
           <span className="text-base font-bold tracking-tight">VIP Сейф 2027</span>
         </div>
 
-        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-mono">
-          {isUnlocked ? (
-            <>
-              <Unlock className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-300">ОТКРЫТО</span>
-            </>
-          ) : (
-            <>
-              <Lock className="w-3.5 h-3.5" />
-              <span>ЗАКРЫТО</span>
-            </>
-          )}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-mono">
+            {isUnlocked ? (
+              <>
+                <Unlock className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-emerald-300">ОТКРЫТО</span>
+              </>
+            ) : (
+              <>
+                <Lock className="w-3.5 h-3.5" />
+                <span>ЗАКРЫТО</span>
+              </>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              vibrate(15);
+              playTapSound(400, 0.04);
+              onBack();
+            }}
+            aria-label="Закрыть сейф"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center text-white/80 transition-all ml-0.5"
+            title="Закрыть приложение"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
       {/* Screen Content: Keypad OR Safe Inside */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-between overscroll-contain">
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-between overscroll-contain touch-pan-y">
         {!isUnlocked ? (
           // ================= LOCKED: NUMERIC PIN KEYPAD =================
           <div className="w-full max-w-[340px] flex flex-col items-center my-auto">

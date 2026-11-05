@@ -1,6 +1,41 @@
 // Safe haptics & audio engine for Android Chrome & iOS
 
+const SETTINGS_STORAGE_KEY = 'ios18_gift_settings';
+
+let soundEnabled = true;
+let hapticsEnabled = true;
+
+// Load persisted switches on initial evaluation if present
+try {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.soundEnabled === 'boolean') {
+        soundEnabled = parsed.soundEnabled;
+      }
+      if (typeof parsed.hapticsEnabled === 'boolean') {
+        hapticsEnabled = parsed.hapticsEnabled;
+      }
+    }
+  }
+} catch {
+  // Ignore localStorage parsing error
+}
+
+export const setGlobalSound = (enabled: boolean) => {
+  soundEnabled = enabled;
+};
+
+export const setGlobalHaptics = (enabled: boolean) => {
+  hapticsEnabled = enabled;
+};
+
+export const getGlobalSound = () => soundEnabled;
+export const getGlobalHaptics = () => hapticsEnabled;
+
 export const vibrate = (pattern: number | number[] = 25) => {
+  if (!hapticsEnabled) return;
   try {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       navigator.vibrate(pattern);
@@ -48,7 +83,26 @@ const getAudioContext = (): AudioContext | null => {
   return audioCtx;
 };
 
+export const primeAudioContext = () => {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    // Play a 1-sample silent buffer synchronously on user gesture
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+  } catch {
+    // Ignore audio priming error
+  }
+};
+
 export const playTapSound = (freq = 440, duration = 0.04) => {
+  if (!soundEnabled) return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -73,6 +127,7 @@ export const playTapSound = (freq = 440, duration = 0.04) => {
 };
 
 export const playGlitchSound = () => {
+  if (!soundEnabled) return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -107,6 +162,7 @@ export const playGlitchSound = () => {
 };
 
 export const playNotificationSound = () => {
+  if (!soundEnabled) return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -138,6 +194,7 @@ export const playNotificationSound = () => {
 };
 
 export const playUnlockSound = () => {
+  if (!soundEnabled) return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -164,6 +221,7 @@ export const playUnlockSound = () => {
 };
 
 export const playScratchSound = () => {
+  if (!soundEnabled) return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;

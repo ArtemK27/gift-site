@@ -211,7 +211,7 @@ export const MessengerApp: React.FC<MessengerAppProps> = ({ onBack }) => {
               vibrate(15);
               onBack();
             }}
-            aria-label="Назад из Мессенджера"
+            aria-label="Назад к чатам"
             className="p-1.5 -ml-1 rounded-full hover:bg-white/10 active:scale-95 transition-all text-zinc-300"
           >
             <ChevronLeft className="w-6 h-6" />
@@ -247,12 +247,24 @@ export const MessengerApp: React.FC<MessengerAppProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-1 text-zinc-400">
-          <button className="p-2 rounded-full hover:bg-white/10 active:scale-95">
+        <div className="flex items-center gap-1.5 text-zinc-400">
+          <button className="p-2 rounded-full hover:bg-white/10 active:scale-95" title="Позвонить">
             <Phone className="w-4 h-4" />
           </button>
-          <button className="p-2 rounded-full hover:bg-white/10 active:scale-95">
+          <button className="p-2 rounded-full hover:bg-white/10 active:scale-95" title="Видеозвонок">
             <Video className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              vibrate(15);
+              playTapSound(400, 0.04);
+              onBack();
+            }}
+            aria-label="Закрыть мессенджер"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center text-white/80 transition-all ml-1"
+            title="Закрыть приложение"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -278,7 +290,7 @@ export const MessengerApp: React.FC<MessengerAppProps> = ({ onBack }) => {
       </AnimatePresence>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-3.5 overscroll-contain">
+      <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-3.5 overscroll-contain touch-pan-y">
         {messages.map((msg) => {
           const isRevealed = revealedSpoilers[msg.id];
 
@@ -430,6 +442,7 @@ export const MessengerApp: React.FC<MessengerAppProps> = ({ onBack }) => {
               playTapSound();
               setShowStickers((prev) => !prev);
             }}
+            aria-label="Открыть стикеры"
             className={`p-2.5 rounded-xl border transition-all ${
               showStickers
                 ? 'bg-amber-400 text-black border-amber-300'

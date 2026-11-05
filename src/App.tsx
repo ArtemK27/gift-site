@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ScreenType, AppId } from './types';
 import { PhoneShell } from './components/PhoneShell';
 import { BaitScreen } from './components/screens/BaitScreen';
@@ -9,87 +9,45 @@ import { MessengerApp } from './components/apps/MessengerApp';
 import { SafeApp } from './components/apps/SafeApp';
 import { NotesApp } from './components/apps/NotesApp';
 import { GalleryApp } from './components/apps/GalleryApp';
-import { requestFullscreenMode, vibrate, playTapSound } from './utils/haptics';
+import { SettingsApp } from './components/apps/SettingsApp';
+import { ClockApp } from './components/apps/ClockApp';
+import { WeatherApp } from './components/apps/WeatherApp';
+import { SettingsProvider } from './context/SettingsContext';
+import { primeAudioContext } from './utils/haptics';
 
-// iOS App Window Wrapper with physical drag-to-dismiss gesture
+// iOS App Window Wrapper with iOS 18 spring physics
 const AppWindow: React.FC<{
   children: React.ReactNode;
   onDismiss: () => void;
-}> = ({ children, onDismiss }) => {
-  const touchStartY = React.useRef(0);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const diffY = touchStartY.current - e.changedTouches[0].clientY;
-    // Swiped up or down past threshold
-    if (Math.abs(diffY) > 20) {
-      vibrate(25);
-      playTapSound(400, 0.04);
-      onDismiss();
-    }
-  };
-
+}> = ({ children }) => {
   return (
     <motion.div
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={{ top: 0.25, bottom: 0.25 }}
-      onDragEnd={(_: unknown, info: { offset: { y: number }; velocity: { y: number } }) => {
-        if (Math.abs(info.offset.y) > 50 || Math.abs(info.velocity.y) > 200) {
-          vibrate(25);
-          playTapSound(380, 0.05);
-          onDismiss();
-        }
-      }}
-      initial={{ y: '100%', opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: '100%', opacity: 0 }}
+      initial={{ scale: 0.88, opacity: 0, y: 24, borderRadius: 36 }}
+      animate={{ scale: 1, opacity: 1, y: 0, borderRadius: 0 }}
+      exit={{ scale: 0.84, opacity: 0, y: -24, borderRadius: 44 }}
       transition={{
         type: 'spring',
-        stiffness: 380,
-        damping: 32,
-        mass: 0.85,
+        stiffness: 320,
+        damping: 28,
+        mass: 0.75,
       }}
-      className="absolute inset-0 w-full h-full z-40 bg-[#000000] overflow-hidden shadow-2xl flex flex-col"
+      className="absolute inset-0 w-full h-full z-40 bg-[#000000] overflow-hidden shadow-2xl flex flex-col will-change-transform pb-8"
     >
       <div className="flex-1 w-full h-full overflow-hidden flex flex-col">
         {children}
       </div>
-
-      {/* Interactive Bottom Pull Bar to Swipe Up */}
-      <button
-        id="dismiss-app-bar"
-        aria-label="Закрыть приложение"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onClick={(e) => {
-          e.stopPropagation();
-          vibrate(25);
-          playTapSound(400, 0.04);
-          onDismiss();
-        }}
-        className="w-full pt-1.5 pb-2.5 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center cursor-pointer border-t border-white/10 active:opacity-60 z-50 select-none outline-none border-0"
-      >
-        <span className="text-[9px] font-mono tracking-wider text-white/50 mb-1 uppercase pointer-events-none">
-          Потяните вверх для выхода
-        </span>
-        <div className="w-36 h-1.5 bg-white/80 rounded-full pointer-events-none" />
-      </button>
     </motion.div>
   );
 };
 
-export const App: React.FC = () => {
+const MainAppContent: React.FC = () => {
   const [screen, setScreen] = useState<ScreenType>('bait');
   const [activeApp, setActiveApp] = useState<AppId>(null);
 
-  // Trigger fullscreen & initial audio context on first touch
+  // Prime Web Audio API on first user interaction
   useEffect(() => {
     const handleFirstTouch = () => {
-      requestFullscreenMode();
+      primeAudioContext();
       window.removeEventListener('pointerdown', handleFirstTouch);
     };
     window.addEventListener('pointerdown', handleFirstTouch, { once: true });
@@ -106,14 +64,16 @@ export const App: React.FC = () => {
 
   const handleOpenNotification = (targetApp: string) => {
     setScreen('home');
-    if (targetApp === 'messenger') {
-      setActiveApp('messenger');
-    } else if (targetApp === 'safe') {
-      setActiveApp('safe');
-    } else if (targetApp === 'notes') {
-      setActiveApp('notes');
-    } else if (targetApp === 'gallery') {
-      setActiveApp('gallery');
+    if (
+      targetApp === 'messenger' ||
+      targetApp === 'safe' ||
+      targetApp === 'notes' ||
+      targetApp === 'gallery' ||
+      targetApp === 'settings' ||
+      targetApp === 'clock' ||
+      targetApp === 'weather'
+    ) {
+      setActiveApp(targetApp as AppId);
     }
   };
 
@@ -125,11 +85,14 @@ export const App: React.FC = () => {
     setActiveApp(null);
   };
 
-  // If on BaitScreen, render full cozy card experience
+  // If on BaitScreen, render full cozy card experience with responsive chassis
   if (screen === 'bait') {
     return (
-      <div className="w-full h-[100dvh] flex items-center justify-center bg-[#010103] overflow-hidden select-none">
-        <div className="w-full max-w-[430px] h-[100dvh] mx-auto relative overflow-hidden bg-[#000000] sm:rounded-[56px] sm:border-[10px] sm:border-[#232328] sm:ring-1 sm:ring-white/10 sm:shadow-[0_25px_80px_rgba(0,0,0,0.9)]">
+      <div className="w-full h-[100dvh] sm:p-6 flex items-center justify-center bg-[#010103] overflow-hidden select-none">
+        {/* Outer ambient desktop glow */}
+        <div className="hidden sm:block absolute w-[540px] h-[860px] rounded-full bg-gradient-to-tr from-rose-950/20 via-sky-950/15 to-purple-950/20 blur-3xl pointer-events-none" />
+
+        <div className="w-full h-[100dvh] rounded-none border-0 sm:w-[430px] sm:h-[min(932px,calc(100dvh-48px))] sm:rounded-[56px] sm:border-[10px] sm:border-[#232328] sm:ring-1 sm:ring-white/10 sm:shadow-[0_25px_80px_rgba(0,0,0,0.9)] mx-auto relative overflow-hidden bg-[#000000]">
           <BaitScreen onUnlockStart={handleUnlockStart} />
         </div>
       </div>
@@ -198,10 +161,27 @@ export const App: React.FC = () => {
               {activeApp === 'gallery' && (
                 <GalleryApp onBack={handleCloseApp} />
               )}
+              {activeApp === 'settings' && (
+                <SettingsApp onBack={handleCloseApp} />
+              )}
+              {activeApp === 'clock' && (
+                <ClockApp onBack={handleCloseApp} />
+              )}
+              {activeApp === 'weather' && (
+                <WeatherApp onBack={handleCloseApp} />
+              )}
             </AppWindow>
           )}
         </AnimatePresence>
       </div>
     </PhoneShell>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <SettingsProvider>
+      <MainAppContent />
+    </SettingsProvider>
   );
 };

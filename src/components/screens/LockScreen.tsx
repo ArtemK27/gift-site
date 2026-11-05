@@ -155,14 +155,16 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, onOpenNotifica
 
               {/* Text content */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-xs font-bold text-white tracking-tight truncate flex items-center gap-1.5">
-                    {notif.sender}
-                    <span className="text-[10px] font-normal text-white/50">
+                <div className="flex items-center justify-between gap-2 min-w-0 mb-0.5">
+                  <div className="flex items-center gap-1.5 min-w-0 truncate">
+                    <span className="text-xs font-bold text-white tracking-tight truncate min-w-0">
+                      {notif.sender}
+                    </span>
+                    <span className="text-[10px] font-normal text-white/50 shrink-0">
                       • {notif.title}
                     </span>
-                  </span>
-                  <span className="text-[10px] text-white/50 font-mono">
+                  </div>
+                  <span className="text-[10px] text-white/50 font-mono shrink-0 whitespace-nowrap">
                     {notif.time}
                   </span>
                 </div>
