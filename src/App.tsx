@@ -13,6 +13,7 @@ import { SettingsApp } from './components/apps/SettingsApp';
 import { ClockApp } from './components/apps/ClockApp';
 import { WeatherApp } from './components/apps/WeatherApp';
 import { SettingsProvider } from './context/SettingsContext';
+import { AudioProvider } from './context/AudioContext';
 import { primeAudioContext } from './utils/haptics';
 
 // iOS App Window Wrapper with iOS 18 spring physics
@@ -31,7 +32,7 @@ const AppWindow: React.FC<{
         damping: 28,
         mass: 0.75,
       }}
-      className="absolute inset-0 w-full h-full z-40 bg-[#000000] overflow-hidden shadow-2xl flex flex-col will-change-transform pb-8"
+      className="absolute inset-0 w-full h-full z-40 bg-[#000000] overflow-hidden shadow-2xl flex flex-col will-change-transform"
     >
       <div className="flex-1 w-full h-full overflow-hidden flex flex-col">
         {children}
@@ -181,7 +182,9 @@ const MainAppContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <SettingsProvider>
-      <MainAppContent />
+      <AudioProvider>
+        <MainAppContent />
+      </AudioProvider>
     </SettingsProvider>
   );
 };

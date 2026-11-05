@@ -12,6 +12,20 @@ export const BaitScreen: React.FC<BaitScreenProps> = ({ onUnlockStart }) => {
   const [glitchPhase, setGlitchPhase] = useState(0);
 
   const handleOpenGift = () => {
+    // Safe fullscreen request: do not block transition if rejected/unsupported
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        const req = document.documentElement.requestFullscreen();
+        if (req && typeof req.catch === 'function') {
+          req.catch(() => {
+            // Ignore rejection in headless Playwright or user denied fullscreen
+          });
+        }
+      }
+    } catch {
+      // Safe fallback for environments where Fullscreen API throws synchronously
+    }
+
     vibrate([40, 60, 40, 100, 200]);
     playGlitchSound();
     setIsGlitching(true);

@@ -311,12 +311,11 @@ test.describe('Adversarial Gesture & Touch Isolation Stress Suite', () => {
     await launchApp(page, 'ПодвалГрам');
     await expect(page.locator('text=ПодвалГрам').first()).toBeVisible();
 
-    // Verify AppWindow wrapper classes: will-change-transform and pb-8
+    // Verify AppWindow wrapper classes: will-change-transform (bottom-0 layout)
     const appWrapper = page.locator('.will-change-transform');
     await expect(appWrapper).toBeVisible();
     const classList = await appWrapper.getAttribute('class');
     expect(classList).toContain('will-change-transform');
-    expect(classList).toContain('pb-8');
 
     // Click Home indicator to trigger spring exit
     const indicator = page.locator('#ios-home-indicator');

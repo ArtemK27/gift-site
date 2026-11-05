@@ -186,7 +186,7 @@ export const ClockApp: React.FC<ClockAppProps> = ({ onBack }) => {
       </div>
 
       {/* Main Tab Content with Touch Isolation */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 overscroll-contain touch-pan-y">
+      <div className="flex-1 overflow-y-auto px-4 pt-3 pb-6 space-y-4 overscroll-contain touch-pan-y">
         <AnimatePresence mode="wait">
           {/* ================= TAB 1: WORLD CLOCK ================= */}
           {activeTab === 'world' && (
@@ -547,7 +547,7 @@ export const ClockApp: React.FC<ClockAppProps> = ({ onBack }) => {
       </div>
 
       {/* Bottom iOS Clock Tab Bar */}
-      <div className="flex items-center justify-around py-2 px-3 bg-black/90 backdrop-blur-2xl border-t border-white/10 z-20">
+      <div className="flex items-center justify-around pt-2 px-3 pb-6 bg-black/90 backdrop-blur-2xl border-t border-white/10 z-20">
         {[
           { id: 'world' as const, label: 'Мировые часы', icon: Globe },
           { id: 'alarm' as const, label: 'Будильник', icon: AlarmClock },

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   ChevronLeft,
@@ -14,7 +14,7 @@ import {
   Clock,
   Compass,
 } from 'lucide-react';
-import { vibrate, playTapSound } from '../../utils/haptics';
+import { vibrate, playTapSound, playGlitchSound } from '../../utils/haptics';
 
 interface WeatherAppProps {
   onBack: () => void;
@@ -22,8 +22,44 @@ interface WeatherAppProps {
 
 export const WeatherApp: React.FC<WeatherAppProps> = ({ onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isBlizzardActive, setIsBlizzardActive] = useState(false);
+  const blizzardStartTimeRef = useRef<number | null>(null);
+  const blizzardTimerRef = useRef<number | null>(null);
 
-  // Gentle Canvas Snowfall Animation
+  const handleTriggerBlizzard = () => {
+    if (isBlizzardActive) return;
+    setIsBlizzardActive(true);
+    blizzardStartTimeRef.current = performance.now();
+
+    // Tactile haptic pulse via navigator.vibrate & safe wrapper
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate?.([50, 100, 50, 100]);
+      }
+    } catch {
+      // Ignore unsupported vibration
+    }
+    vibrate([50, 100, 50, 100]);
+    playGlitchSound();
+
+    if (blizzardTimerRef.current) {
+      window.clearTimeout(blizzardTimerRef.current);
+    }
+    blizzardTimerRef.current = window.setTimeout(() => {
+      setIsBlizzardActive(false);
+      blizzardStartTimeRef.current = null;
+    }, 4500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (blizzardTimerRef.current) {
+        window.clearTimeout(blizzardTimerRef.current);
+      }
+    };
+  }, []);
+
+  // High-performance 60 FPS Canvas Snowfall & Vortex Blizzard Engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -31,44 +67,189 @@ export const WeatherApp: React.FC<WeatherAppProps> = ({ onBack }) => {
     if (!ctx) return;
 
     let animationFrameId: number;
-    let width = (canvas.width = canvas.offsetWidth);
-    let height = (canvas.height = canvas.offsetHeight);
+    let width = (canvas.width = canvas.offsetWidth || 360);
+    let height = (canvas.height = canvas.offsetHeight || 640);
 
     const handleResize = () => {
       if (!canvas) return;
-      width = canvas.width = canvas.offsetWidth;
-      height = canvas.height = canvas.offsetHeight;
+      width = canvas.width = canvas.offsetWidth || 360;
+      height = canvas.height = canvas.offsetHeight || 640;
     };
     window.addEventListener('resize', handleResize);
 
-    const snowflakes = Array.from({ length: 45 }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      radius: Math.random() * 2.2 + 0.8,
-      speedY: Math.random() * 0.9 + 0.5,
-      speedX: Math.random() * 0.5 - 0.25,
-      opacity: Math.random() * 0.6 + 0.3,
-    }));
+    // Snowflake particle pool: 45 ambient + 85 blizzard-specific = 130 particles
+    const snowflakes = [
+      ...Array.from({ length: 45 }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 2.2 + 0.8,
+        speedY: Math.random() * 0.9 + 0.5,
+        speedX: Math.random() * 0.5 - 0.25,
+        opacity: Math.random() * 0.6 + 0.3,
+        swirlOffset: Math.random() * Math.PI * 2,
+        isBlizzardSpecial: false,
+      })),
+      ...Array.from({ length: 85 }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 2.4 + 0.6,
+        speedY: Math.random() * 1.5 + 0.8,
+        speedX: Math.random() * 1.2 - 0.6,
+        opacity: Math.random() * 0.55 + 0.35,
+        swirlOffset: Math.random() * Math.PI * 2,
+        isBlizzardSpecial: true,
+      })),
+    ];
 
     const render = () => {
+      // Calculate blizzard intensity envelope (4.5s cycle: 700ms ramp, 2900ms peak, 900ms decay)
+      let intensity = 0;
+      if (blizzardStartTimeRef.current !== null) {
+        const elapsed = performance.now() - blizzardStartTimeRef.current;
+        if (elapsed >= 0 && elapsed < 4500) {
+          if (elapsed < 700) {
+            intensity = elapsed / 700;
+          } else if (elapsed < 3600) {
+            intensity = 1.0;
+          } else {
+            intensity = Math.max(0, (4500 - elapsed) / 900);
+          }
+        } else {
+          blizzardStartTimeRef.current = null;
+        }
+      }
+
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = '#ffffff';
+
+      // Frost vignette around phone screen edges drawn directly in Canvas 2D without DOM bloat
+      if (intensity > 0.005) {
+        const maxR = Math.max(width, height) * 0.75;
+        const minR = Math.min(width, height) * 0.28;
+        const frostGrad = ctx.createRadialGradient(
+          width / 2,
+          height * 0.45,
+          minR,
+          width / 2,
+          height * 0.45,
+          maxR
+        );
+        frostGrad.addColorStop(0, 'rgba(210, 240, 255, 0)');
+        frostGrad.addColorStop(0.55, `rgba(180, 225, 255, ${0.12 * intensity})`);
+        frostGrad.addColorStop(1, `rgba(225, 248, 255, ${0.48 * intensity})`);
+
+        ctx.fillStyle = frostGrad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Top frost border
+        const topGrad = ctx.createLinearGradient(0, 0, 0, 52);
+        topGrad.addColorStop(0, `rgba(235, 250, 255, ${0.45 * intensity})`);
+        topGrad.addColorStop(1, 'rgba(235, 250, 255, 0)');
+        ctx.fillStyle = topGrad;
+        ctx.fillRect(0, 0, width, 52);
+
+        // Bottom frost border
+        const botGrad = ctx.createLinearGradient(0, height - 70, 0, height);
+        botGrad.addColorStop(0, 'rgba(235, 250, 255, 0)');
+        botGrad.addColorStop(1, `rgba(235, 250, 255, ${0.55 * intensity})`);
+        ctx.fillStyle = botGrad;
+        ctx.fillRect(0, height - 70, width, 70);
+
+        // Left frost border
+        const leftGrad = ctx.createLinearGradient(0, 0, 36, 0);
+        leftGrad.addColorStop(0, `rgba(235, 250, 255, ${0.38 * intensity})`);
+        leftGrad.addColorStop(1, 'rgba(235, 250, 255, 0)');
+        ctx.fillStyle = leftGrad;
+        ctx.fillRect(0, 0, 36, height);
+
+        // Right frost border
+        const rightGrad = ctx.createLinearGradient(width - 36, 0, width, 0);
+        rightGrad.addColorStop(0, 'rgba(235, 250, 255, 0)');
+        rightGrad.addColorStop(1, `rgba(235, 250, 255, ${0.38 * intensity})`);
+        ctx.fillStyle = rightGrad;
+        ctx.fillRect(width - 36, 0, 36, height);
+      }
+
+      // Vortex coordinates & physics dynamics
+      const vortexCenterX = width / 2;
+      const vortexCenterY = height * 0.45;
+      const nowSec = performance.now() * 0.001;
 
       snowflakes.forEach((flake) => {
+        // If this is a blizzard-only particle and intensity is idle, skip
+        if (flake.isBlizzardSpecial && intensity < 0.01) {
+          return;
+        }
+
+        let currentAlpha = flake.opacity;
+        if (flake.isBlizzardSpecial) {
+          currentAlpha = flake.opacity * intensity;
+        } else if (intensity > 0) {
+          currentAlpha = Math.min(1, flake.opacity * (1 + intensity * 0.4));
+        }
+
         ctx.beginPath();
         ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${flake.opacity})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${currentAlpha})`;
         ctx.fill();
 
-        flake.y += flake.speedY;
-        flake.x += flake.speedX;
+        if (intensity > 0.001) {
+          // Vortex vector field physics
+          const dx = flake.x - vortexCenterX;
+          const dy = flake.y - vortexCenterY;
+          const dist = Math.sqrt(dx * dx + dy * dy) + 0.1;
 
-        if (flake.y > height) {
-          flake.y = -5;
+          // Tangential swirl vectors
+          const tx = -dy / dist;
+          const ty = dx / dist;
+
+          // Radial vectors
+          const rx = dx / dist;
+          const ry = dy / dist;
+
+          const maxInfluenceDist = width * 0.85;
+          const distFactor = Math.max(0, 1 - dist / maxInfluenceDist);
+          const tangentialSpeed = (4.5 + 7.5 * distFactor) * intensity;
+
+          const radialSpeed =
+            (-1.2 + 2.0 * Math.cos(dist * 0.035 - nowSec * 3.5 + flake.swirlOffset)) *
+            intensity;
+
+          const windX = (-2.8 + Math.sin(nowSec * 2.5) * 1.6) * intensity;
+          const windY = (2.2 + Math.cos(nowSec * 2.0) * 0.9) * intensity;
+
+          const vx =
+            flake.speedX * (1 - intensity * 0.5) +
+            tx * tangentialSpeed +
+            rx * radialSpeed +
+            windX;
+          const vy =
+            flake.speedY * (1 + intensity * 1.5) +
+            ty * tangentialSpeed +
+            ry * radialSpeed +
+            windY;
+
+          flake.x += vx;
+          flake.y += vy;
+        } else {
+          // Gentle ambient snowfall
+          flake.x += flake.speedX;
+          flake.y += flake.speedY;
+        }
+
+        // Boundary wrap-around
+        if (flake.y > height + 20) {
+          flake.y = -15;
+          flake.x = Math.random() * width;
+        } else if (flake.y < -20) {
+          flake.y = height + 15;
           flake.x = Math.random() * width;
         }
-        if (flake.x > width) flake.x = 0;
-        if (flake.x < 0) flake.x = width;
+
+        if (flake.x > width + 25) {
+          flake.x = -20;
+        } else if (flake.x < -25) {
+          flake.x = width + 20;
+        }
       });
 
       animationFrameId = requestAnimationFrame(render);
@@ -109,10 +290,11 @@ export const WeatherApp: React.FC<WeatherAppProps> = ({ onBack }) => {
 
   return (
     <div className="relative w-full h-full flex flex-col bg-gradient-to-b from-[#101b33] via-[#0b1324] to-[#040810] text-white select-none z-30 overflow-hidden font-sans">
-      {/* Background Animated Canvas Snowfall */}
+      {/* Background Animated Canvas Snowfall & 60 FPS Blizzard Vortex (R4) */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none z-10 opacity-70"
+        className="absolute inset-0 w-full h-full pointer-events-none z-25 z-[25] opacity-90"
+        style={{ zIndex: 25 }}
       />
 
       {/* Top Header with ChevronLeft and Frosted X Exit */}
@@ -146,7 +328,7 @@ export const WeatherApp: React.FC<WeatherAppProps> = ({ onBack }) => {
       </div>
 
       {/* Main Weather Scroll Container */}
-      <div className="relative flex-1 overflow-y-auto px-4 py-4 space-y-5 overscroll-contain touch-pan-y z-20">
+      <div className="relative flex-1 overflow-y-auto px-4 pt-4 pb-8 space-y-5 overscroll-contain touch-pan-y z-20">
         {/* Hero Section */}
         <div className="text-center pt-2 pb-1 space-y-1">
           <div className="flex items-center justify-center gap-1.5 text-lg font-bold tracking-tight text-white">
@@ -170,6 +352,57 @@ export const WeatherApp: React.FC<WeatherAppProps> = ({ onBack }) => {
           </div>
         </div>
 
+        {/* Interactive Festive Blizzard Trigger Button (R4) */}
+        <button
+          onClick={handleTriggerBlizzard}
+          disabled={isBlizzardActive}
+          aria-label="Запустить новогоднюю метель"
+          className={`w-full relative overflow-hidden py-3 px-4 rounded-2xl flex items-center justify-between border transition-all duration-300 backdrop-blur-xl shadow-lg active:scale-[0.98] ${
+            isBlizzardActive
+              ? 'bg-gradient-to-r from-cyan-500/30 via-sky-500/35 to-blue-600/30 border-cyan-300/60 shadow-[0_0_25px_rgba(56,189,248,0.35)] cursor-default'
+              : 'bg-white/[0.08] hover:bg-white/[0.14] border-white/20 hover:border-sky-300/40 cursor-pointer'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                isBlizzardActive
+                  ? 'bg-sky-400/30 text-cyan-200'
+                  : 'bg-white/10 text-sky-300'
+              }`}
+            >
+              <Sparkles
+                className={`w-4 h-4 ${isBlizzardActive ? 'animate-spin' : ''}`}
+                style={{ animationDuration: '3s' }}
+              />
+            </div>
+            <div className="text-left">
+              <div className="text-xs font-semibold text-white tracking-tight flex items-center gap-1.5">
+                <span>{isBlizzardActive ? 'Бушует снежная буря!' : 'Запустить метель'}</span>
+                <span className="text-xs">❄️</span>
+              </div>
+              <div className="text-[10px] text-sky-200/70 font-medium">
+                {isBlizzardActive
+                  ? 'Новогодний вихрь в пентхаусе'
+                  : 'Спиральный вихрь • 4.5 сек'}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {isBlizzardActive ? (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-400/20 text-cyan-200 border border-cyan-300/40 animate-pulse">
+                АКТИВНО
+              </span>
+            ) : (
+              <div className="flex items-center gap-1 text-sky-300 text-xs font-semibold bg-white/[0.06] py-1 px-2.5 rounded-xl border border-white/10">
+                <span>Вьюга</span>
+                <Wind className="w-3.5 h-3.5" />
+              </div>
+            )}
+          </div>
+        </button>
+
         {/* Hourly Forecast Horizontal Scroll Tile */}
         <div className="bg-white/[0.08] backdrop-blur-2xl rounded-2xl p-3.5 border border-white/15 shadow-xl space-y-2">
           <div className="flex items-center gap-1.5 text-xs text-sky-200/80 font-semibold uppercase tracking-wider px-1">
@@ -177,7 +410,10 @@ export const WeatherApp: React.FC<WeatherAppProps> = ({ onBack }) => {
             <span>Почасовой прогноз</span>
           </div>
 
-          <div className="flex items-center gap-4 overflow-x-auto py-2 px-1 no-scrollbar touch-pan-x">
+          <div
+            className="flex items-center gap-4 overflow-x-auto py-2 px-1 no-scrollbar touch-pan-x touch-pan-y"
+            style={{ touchAction: 'pan-x pan-y' }}
+          >
             {hourlyForecast.map((item, idx) => (
               <div
                 key={idx}

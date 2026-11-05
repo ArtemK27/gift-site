@@ -21,15 +21,19 @@ export const PhoneShell: React.FC<PhoneShellProps> = ({
   const lastSwipeTime = React.useRef(0);
 
   const handleIndicatorPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!e.isPrimary || e.button !== 0) return;
-    gesture.current = { id: e.pointerId, x: e.clientX, y: e.clientY, time: Date.now() };
+    if (e.button !== undefined && e.button !== 0) return;
+    gesture.current = { id: e.pointerId ?? 0, x: e.clientX, y: e.clientY, time: Date.now() };
     // Keep receiving the release after the finger/mouse leaves the 32px strip.
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try {
+      if (e.currentTarget.setPointerCapture && e.pointerId !== undefined) {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }
+    } catch {}
   };
 
   const handleIndicatorPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     const start = gesture.current;
-    if (!start || start.id !== e.pointerId) return;
+    if (!start) return;
     gesture.current = null;
     const dy = start.y - e.clientY;
     const dx = Math.abs(start.x - e.clientX);
@@ -41,7 +45,35 @@ export const PhoneShell: React.FC<PhoneShellProps> = ({
       playTapSound(420, 0.04);
       onHomePress();
     }
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    try {
+      if (e.currentTarget.hasPointerCapture && e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {}
+  };
+
+  const handleIndicatorTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches && e.touches.length > 0) {
+      const t = e.touches[0];
+      gesture.current = { id: t.identifier, x: t.clientX, y: t.clientY, time: Date.now() };
+    }
+  };
+
+  const handleIndicatorTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    const start = gesture.current;
+    if (!start) return;
+    gesture.current = null;
+    const t = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+    if (!t) return;
+    const dy = start.y - t.clientY;
+    const dx = Math.abs(start.x - t.clientX);
+    const velocity = dy / Math.max(1, Date.now() - start.time);
+    if (Math.max(Math.abs(dy), dx) > 8) lastSwipeTime.current = Date.now();
+    if (dy > dx && (dy > 25 || (dy > 15 && velocity > 0.25)) && activeApp) {
+      vibrate(25);
+      playTapSound(420, 0.04);
+      onHomePress();
+    }
   };
 
   const handleIndicatorPointerCancel = () => {
@@ -102,7 +134,7 @@ export const PhoneShell: React.FC<PhoneShellProps> = ({
         {showDynamicIsland && <DynamicIsland />}
 
         {/* Main Viewport Content Area */}
-        <div className="relative z-20 flex-1 min-h-0 w-full overflow-hidden flex flex-col pb-8">
+        <div className={`relative z-20 flex-1 min-h-0 w-full overflow-hidden flex flex-col ${activeApp ? 'pb-0' : 'pb-8'}`}>
           {children}
         </div>
 
@@ -113,6 +145,8 @@ export const PhoneShell: React.FC<PhoneShellProps> = ({
           onPointerUp={handleIndicatorPointerUp}
           onPointerCancel={handleIndicatorPointerCancel}
           onLostPointerCapture={handleIndicatorPointerCancel}
+          onTouchStart={handleIndicatorTouchStart}
+          onTouchEnd={handleIndicatorTouchEnd}
           onClick={handleIndicatorClick}
           aria-label="Закрыть приложение и вернуться на рабочий стол"
           className="absolute bottom-0 left-0 right-0 h-8 z-50 pointer-events-auto touch-none flex items-center justify-center cursor-pointer group active:opacity-60"

@@ -142,7 +142,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onBack }) => {
       </div>
 
       {/* Scrollable Settings Groups with Touch Isolation */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 overscroll-contain touch-pan-y">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-8 space-y-5 overscroll-contain touch-pan-y">
         {/* iOS Large Title */}
         <div className="pt-1 pb-1">
           <h1 className="text-3xl font-extrabold tracking-tight text-white">Настройки</h1>
@@ -417,7 +417,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onBack }) => {
         </div>
 
         {/* Footer info */}
-        <div className="text-center pt-2 pb-6 text-[11px] text-white/30 space-y-0.5">
+        <div className="text-center pt-2 pb-8 text-[11px] text-white/30 space-y-0.5">
           <div>Apple Inc. • Designed by Cupertino & Penthouse Seoul</div>
           <div>New Year 2027 Interactive Gift OS</div>
         </div>

@@ -48,7 +48,14 @@
 ```
 Gift-site/
 ├── public/
-│   └── assets/                     # 11 локальных сгенерированных ассетов (аватары, арты, стикеры)
+│   └── assets/                     # 17 локальных сгенерированных ассетов (аватары, арты, стикеры, обложки плеера)
+│       ├── audio/                  # [R2] 3 валидных локальных аудиофайла (MP3 192k)
+│       │   ├── viperr-heavy-metal.mp3 # Трек 1 (VIPERR)
+│       │   ├── sangwoo-lullaby.mp3    # Трек 2 (Сану)
+│       │   └── erha-snow-melody.mp3   # Трек 3 (Чу Ваньнин & Мо Жань)
+│       ├── cover-viperr.jpg        # Квадратная обложка трека 1
+│       ├── cover-sangwoo.jpg       # Квадратная обложка трека 2
+│       └── cover-erha.jpg          # Квадратная обложка трека 3
 ├── src/
 │   ├── components/
 │   │   ├── apps/                   # Модульные приложения смартфона
@@ -68,10 +75,11 @@ Gift-site/
 │   │   │   ├── BaitScreen.tsx      # Экран 0: Милая новогодняя открытка (обманка перед взломом)
 │   │   │   ├── HomeScreen.tsx      # Экран 2: SpringBoard с горизонтальным свайпом страниц и точками
 │   │   │   └── LockScreen.tsx      # Экран 1: Экран блокировки iOS 18 (часы, погода, стек уведомлений)
-│   │   ├── DynamicIsland.tsx       # Интерактивный вырез Dynamic Island (плеер VIPERR с эквалайзером)
+│   │   ├── DynamicIsland.tsx       # [R2] Интерактивный вырез Dynamic Island (iOS 18 плеер: обложка, скраббер, Prev/Play/Next)
 │   │   ├── LiveWallpaper.tsx       # Интерактивный Canvas: 3-слойный снег, боке, лепестки сливы
 │   │   └── PhoneShell.tsx          # Рамка смартфона: статус-бар iOS, Island, изолированный Home Indicator
 │   ├── context/
+│   │   ├── AudioContext.tsx        # [R2 & R5] Управление списком треков, HTML5 Audio, скраббером и умной автопаузой
 │   │   └── SettingsContext.tsx     # React Context для звука, вибро, обоев и localStorage
 │   ├── types/
 │   │   └── index.ts                # TypeScript-интерфейсы моделей данных (чаты, заметки, фото, настройки)
@@ -238,6 +246,57 @@ Gift-site/
 | `sticker_sangwoo.png` | Чиби-стикер Сану с имбирным пряником | Стикерпак в `MessengerApp` |
 | `sticker_chu_wanning.png` | Чиби-стикер котика Чу Ваньнина с тарелкой хунтуней | Стикерпак в `MessengerApp` |
 | `sticker_viperr.png` | Стикер летучей мыши VIPERR в новогоднем колпаке | Стикерпак в `MessengerApp` |
+| `cover-viperr.jpg` | Квадратная обложка трека VIPERR («Heavy Metal New Year») | `DynamicIsland.tsx` (Плеер) |
+| `cover-sangwoo.jpg` | Квадратная обложка трека Сану («Midnight Penthouse») | `DynamicIsland.tsx` (Плеер) |
+| `cover-erha.jpg` | Квадратная обложка трека Erha («Snow at Sisheng Peak») | `DynamicIsland.tsx` (Плеер) |
+| `viperr-heavy-metal.mp3` | Аудиофайл трека VIPERR (192 kbps MP3) | `AudioContext.tsx` |
+| `sangwoo-lullaby.mp3` | Аудиофайл трека Сану (192 kbps MP3) | `AudioContext.tsx` |
+| `erha-snow-melody.mp3` | Аудиофайл трека Erha (192 kbps MP3) | `AudioContext.tsx` |
+
+---
+
+### 🎵 Музыкальный плеер в Dynamic Island и инструкция по замене треков (R2 & R5)
+
+Плеер Dynamic Island работает на базе централизованного `AudioContext` (`src/context/AudioContext.tsx`) и поддерживает несколько треков с обложками, интерактивным скраббером, визуальным эквалайзером, изолированными кнопками управления и умной автопаузой при смене вкладки.
+
+#### 1. Файлы треков и обложек по умолчанию:
+- **Аудиофайлы (`public/assets/audio/`):**
+  - `viperr-heavy-metal.mp3` — Трек 1 (VIPERR — «Heavy Metal New Year», badge: `LIVE 2027`)
+  - `sangwoo-lullaby.mp3` — Трек 2 (О Сану — «Midnight Penthouse», badge: `PENTHOUSE`)
+  - `erha-snow-melody.mp3` — Трек 3 (Чу Ваньнин & Мо Жань — «Snow at Sisheng Peak», badge: `SISHENG`)
+  *(Для полной совместимости также созданы алиасы с подчеркиванием: `viperr_heavy_metal.mp3`, `sangwoo_midnight.mp3`, `erha_snow_peak.mp3`)*
+- **Обложки альбомов (`public/assets/`):**
+  - `cover-viperr.jpg` (и `cover_viperr.jpg`) — Квадратная обложка трека 1
+  - `cover-sangwoo.jpg` (и `cover_sangwoo.jpg`) — Квадратная обложка трека 2
+  - `cover-erha.jpg` (и `cover_erha.jpg`) — Квадратная обложка трека 3
+
+#### 2. Инструкция для быстрой замены музыки пользователем:
+- **Способ 1 (Без изменения кода):**
+  1. Подготовьте свои MP3 файлы и переименуйте их в `viperr-heavy-metal.mp3`, `sangwoo-lullaby.mp3`, `erha-snow-melody.mp3`.
+  2. Замените файлы в папке `public/assets/audio/`.
+  3. Подготовьте квадратные JPG обложки (рекомендуется 500x500px) и замените файлы `cover-viperr.jpg`, `cover-sangwoo.jpg`, `cover-erha.jpg` в папке `public/assets/`.
+  4. Пересоберите проект: `npm.cmd run build` (или `npm.cmd run deploy`).
+- **Способ 2 (С изменением названий, длительности и добавлением треков):**
+  1. Откройте файл `src/context/AudioContext.tsx`.
+  2. Отредактируйте массив `DEFAULT_TRACKS` (поля `id`, `title`, `artist`, `fandom`, `badge`, `src`, `cover`, `duration`).
+  3. Относительные пути должны начинаться с `./assets/audio/...` и `./assets/...`, что гарантирует бесшовную работу как на локальном сервере, так и на GitHub Pages при `base: './'`.
+
+#### 3. Архитектура управления и жестов (R2):
+- **Изоляция кликов (`e.stopPropagation()`):** Кнопки `Предыдущий трек` (`SkipBack`), `Воспроизведение/Пауза` (`Play`/`Pause`), `Следующий трек` (`SkipForward`), а также скраббер вызывают `e.stopPropagation()`. Нажатия на них никогда не приводят к случайному закрытию или сворачиванию острова.
+- **Способы сворачивания острова:**
+  - Кнопка сворачивания в правом верхнем углу (`title="Свернуть"` / `aria-label="Свернуть"`).
+  - Свайп вверх по острову (благодаря `framer-motion` `drag="y"` с порогом смещения/скорости).
+  - Нажатие клавиши `Escape` на клавиатуре.
+  - Клик вне острова (с фильтрацией кликов по системному Home Indicator и иконкам рабочего стола для бесперебойного многозадачного сценария).
+
+#### 4. Умная пауза при переключении вкладки (R5):
+- Отслеживается системное событие `document.addEventListener('visibilitychange', ...)`.
+- При скрытии вкладки (`document.hidden === true`):
+  - Если музыка воспроизводилась, воспроизведение приостанавливается, а флаг `wasPlayingBeforeHiddenRef.current` устанавливается в `true`.
+  - Если музыка уже стояла на паузе, флаг устанавливается в `false`.
+- При возврате на вкладку (`document.hidden === false`):
+  - Воспроизведение возобновляется ТОЛЬКО если `wasPlayingBeforeHiddenRef.current === true`, после чего флаг сбрасывается в `false`.
+  - Если пользователь сам поставил музыку на паузу до переключения вкладки, автоматическое включение звука заблокировано.
 
 ---
 

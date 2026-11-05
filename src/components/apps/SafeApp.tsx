@@ -249,7 +249,7 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
       </div>
 
       {/* Screen Content: Keypad OR Safe Inside */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-between overscroll-contain touch-pan-y">
+      <div className="flex-1 overflow-y-auto p-4 pb-8 flex flex-col items-center justify-between overscroll-contain touch-pan-y">
         {!isUnlocked ? (
           // ================= LOCKED: NUMERIC PIN KEYPAD =================
           <div className="w-full max-w-[340px] flex flex-col items-center my-auto">

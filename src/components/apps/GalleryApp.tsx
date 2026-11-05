@@ -237,7 +237,7 @@ export const GalleryApp: React.FC<GalleryAppProps> = ({ onBack }) => {
       </div>
 
       {/* Bottom iOS Photos Navigation Tab Bar */}
-      <div className="px-6 py-2 bg-black/85 backdrop-blur-2xl border-t border-white/10 flex items-center justify-around text-xs text-white/50 z-20">
+      <div className="px-6 pt-2 pb-6 bg-black/85 backdrop-blur-2xl border-t border-white/10 flex items-center justify-around text-xs text-white/50 z-20">
         <div className="flex flex-col items-center text-[#007aff] cursor-pointer">
           <Layers className="w-5 h-5 stroke-[2.2]" />
           <span className="text-[10px] font-medium mt-0.5">Медиатека</span>
@@ -374,7 +374,7 @@ export const GalleryApp: React.FC<GalleryAppProps> = ({ onBack }) => {
             </AnimatePresence>
 
             {/* Viewer Bottom iOS Toolbar */}
-            <div className="px-6 py-3 bg-black/80 backdrop-blur-xl border-t border-white/10 flex items-center justify-between text-[#007aff] z-20">
+            <div className="px-6 pt-3 pb-6 bg-black/80 backdrop-blur-xl border-t border-white/10 flex items-center justify-between text-[#007aff] z-20">
               <button
                 onClick={() => {
                   vibrate(15);

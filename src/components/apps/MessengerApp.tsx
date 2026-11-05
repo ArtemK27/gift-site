@@ -436,7 +436,7 @@ export const MessengerApp: React.FC<MessengerAppProps> = ({ onBack }) => {
       </div>
 
       {/* Bottom Input & Sticker Drawer trigger */}
-      <div className="p-3 border-t border-white/10 bg-black/70 backdrop-blur-xl z-20">
+      <div className="p-3 pb-6 border-t border-white/10 bg-black/70 backdrop-blur-xl z-20">
         <div className="flex items-center gap-2">
           <button
             onClick={() => {

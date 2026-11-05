@@ -145,7 +145,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ onBack }) => {
       </div>
 
       {/* Main View Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-2 overscroll-contain touch-pan-y">
+      <div className="flex-1 overflow-y-auto px-4 pt-2 pb-6 overscroll-contain touch-pan-y">
         <AnimatePresence mode="wait">
           {!activeNote ? (
             // ================= iOS NOTES LIST VIEW =================
@@ -290,7 +290,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ onBack }) => {
       </div>
 
       {/* Bottom iOS Notes Toolbar */}
-      <div className="px-6 py-2.5 bg-black/80 backdrop-blur-xl border-t border-white/10 flex items-center justify-between text-[#ffd60a] z-20">
+      <div className="px-6 pt-2.5 pb-6 bg-black/80 backdrop-blur-xl border-t border-white/10 flex items-center justify-between text-[#ffd60a] z-20">
         <button
           onClick={() => {
             vibrate(15);
