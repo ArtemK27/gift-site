@@ -1,6 +1,15 @@
 export type ScreenType = 'bait' | 'glitch' | 'lock' | 'home';
 
-export type AppId = 'messenger' | 'safe' | 'notes' | 'gallery' | 'settings' | 'clock' | 'weather' | null;
+export type AppId =
+  | 'messenger'
+  | 'safe'
+  | 'notes'
+  | 'gallery'
+  | 'settings'
+  | 'clock'
+  | 'weather'
+  | 'minesweeper'
+  | null;
 
 export interface NotificationItem {
   id: string;

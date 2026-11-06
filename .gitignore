@@ -31,3 +31,7 @@ Thumbs.db
 test-results/
 playwright-report/
 /before-home.png
+
+# AI Studio Export Bundles
+argon-bundle/
+argon-bundle.zip

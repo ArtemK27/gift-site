@@ -1,10 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, PanInfo, AnimatePresence, useMotionValue, animate, useReducedMotion } from 'framer-motion';
+import {
+  motion,
+  PanInfo,
+  AnimatePresence,
+  useMotionValue,
+  animate,
+  useReducedMotion,
+} from 'framer-motion';
 import { AppId } from '../../types';
 import { vibrate, playTapSound } from '../../utils/haptics';
 import { PAGE_0_APPS, PAGE_1_APPS } from '../home/homeAppsData';
-import { AppIcon } from '../home/AppIcon';
+import { AppIcon, USE_LEGACY_APP_ICONS } from '../home/AppIcon';
 import { Page0Widgets, Page1Widgets } from '../home/HomeWidgets';
+import { useMessenger } from '../../context/MessengerContext';
 
 interface HomeScreenProps {
   onOpenApp: (app: AppId) => void;
@@ -17,12 +25,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const x = useMotionValue(0);
   const panStartX = useRef(0);
   const reducedMotion = useReducedMotion();
+  const { unreadCount } = useMessenger();
 
   const settlePage = (page: number) => {
     const width = viewportRef.current?.clientWidth ?? 0;
-    return animate(x, -page * width, reducedMotion
-      ? { duration: 0 }
-      : { type: 'spring', stiffness: 320, damping: 30, mass: 1 });
+    return animate(
+      x,
+      -page * width,
+      reducedMotion
+        ? { duration: 0 }
+        : { type: 'spring', stiffness: 320, damping: 30, mass: 1 }
+    );
   };
 
   const pageRef = useRef(currentPage);
@@ -40,10 +53,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
     return () => observer.disconnect();
   }, [x]);
 
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const nextPage = currentPage === 0 && (info.offset.x < -45 || info.velocity.x < -250)
-      ? 1
-      : currentPage === 1 && (info.offset.x > 45 || info.velocity.x > 250) ? 0 : currentPage;
+  const handleDragEnd = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    const nextPage =
+      currentPage === 0 && (info.offset.x < -45 || info.velocity.x < -250)
+        ? 1
+        : currentPage === 1 && (info.offset.x > 45 || info.velocity.x > 250)
+        ? 0
+        : currentPage;
     if (nextPage !== currentPage) {
       setCurrentPage(nextPage);
       vibrate(15);
@@ -74,10 +93,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
     }
   };
 
+  const resolveBadge = (appId: AppId | 'console', legacyBadge?: string) => {
+    if (USE_LEGACY_APP_ICONS) return legacyBadge;
+    if (appId === 'messenger') {
+      return unreadCount > 0 ? String(unreadCount) : undefined;
+    }
+    return undefined;
+  };
+
   return (
-    <div className="relative w-full h-full flex flex-col justify-between pt-8 pb-3 select-none z-10 overflow-hidden font-sans">
+    <div className="relative w-full h-full flex flex-col justify-between pt-3 pb-3 select-none z-10 overflow-hidden font-sans">
       {/* Horizontal Draggable SpringBoard Pages */}
-      <div ref={viewportRef} className="relative flex-1 min-h-0 w-full overflow-hidden flex flex-col">
+      <div
+        ref={viewportRef}
+        className="relative flex-1 min-h-0 w-full overflow-hidden flex flex-col"
+      >
         <motion.div
           data-testid="home-pages"
           style={{ x }}
@@ -88,8 +118,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
           onPan={(_, info) => {
             const width = viewportRef.current?.clientWidth ?? 0;
             const nextX = panStartX.current + info.offset.x;
-            // Follow the finger between pages; resist only at the outside edges.
-            x.set(nextX > 0 ? nextX * 0.2 : nextX < -width ? -width + (nextX + width) * 0.2 : nextX);
+            x.set(
+              nextX > 0
+                ? nextX * 0.2
+                : nextX < -width
+                ? -width + (nextX + width) * 0.2
+                : nextX
+            );
           }}
           onPanEnd={handleDragEnd}
           className="flex w-full h-full touch-pan-y"
@@ -101,9 +136,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
               {PAGE_0_APPS.map((app, idx) => (
                 <AppIcon
                   key={app.id}
+                  id={app.id}
                   name={app.name}
                   icon={app.icon}
-                  badge={app.badge}
+                  badge={resolveBadge(app.id, app.legacyBadge)}
                   bg={app.bg}
                   iconColor={app.iconColor}
                   delay={idx * 0.04}
@@ -113,16 +149,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
             </div>
           </div>
 
-          {/* Page 1: Companion Apps */}
+          {/* Page 1: Companion Apps & Frog Clicker Widget */}
           <div className="w-full h-full shrink-0 flex flex-col justify-between px-6">
             <Page1Widgets onOpenApp={onOpenApp} />
             <div className="grid grid-cols-4 gap-4 py-4 px-1">
               {PAGE_1_APPS.map((app, idx) => (
                 <AppIcon
                   key={app.id}
+                  id={app.id}
                   name={app.name}
                   icon={app.icon}
-                  badge={app.badge}
+                  badge={resolveBadge(app.id, app.legacyBadge)}
                   bg={app.bg}
                   iconColor={app.iconColor}
                   delay={idx * 0.04}
@@ -144,7 +181,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
             aria-label={`Страница ${idx + 1}`}
             aria-current={currentPage === idx ? 'page' : undefined}
             className={`rounded-full transition-all duration-200 cursor-pointer ${
-              currentPage === idx ? 'w-2 h-2 bg-white shadow-sm' : 'w-1.5 h-1.5 bg-white/35 hover:bg-white/60'
+              currentPage === idx
+                ? 'w-2 h-2 bg-white shadow-sm'
+                : 'w-1.5 h-1.5 bg-white/35 hover:bg-white/60'
             }`}
           />
         ))}

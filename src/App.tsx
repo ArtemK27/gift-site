@@ -12,6 +12,7 @@ import { GalleryApp } from './components/apps/GalleryApp';
 import { SettingsApp } from './components/apps/SettingsApp';
 import { ClockApp } from './components/apps/ClockApp';
 import { WeatherApp } from './components/apps/WeatherApp';
+import { MinesweeperApp } from './components/apps/MinesweeperApp';
 import { SettingsProvider } from './context/SettingsContext';
 import { AudioProvider } from './context/AudioContext';
 import { MessengerProvider, useMessenger } from './context/MessengerContext';
@@ -42,8 +43,18 @@ const AppWindow: React.FC<{
   );
 };
 
+const getInitialScreen = (): ScreenType => {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('autostart') === '1') {
+      return 'home';
+    }
+  }
+  return 'bait';
+};
+
 const MainAppContent: React.FC = () => {
-  const [screen, setScreen] = useState<ScreenType>('bait');
+  const [screen, setScreen] = useState<ScreenType>(getInitialScreen);
   const [activeApp, setActiveApp] = useState<AppId>(null);
   const { openThread } = useMessenger();
 
@@ -74,7 +85,8 @@ const MainAppContent: React.FC = () => {
       targetApp === 'gallery' ||
       targetApp === 'settings' ||
       targetApp === 'clock' ||
-      targetApp === 'weather'
+      targetApp === 'weather' ||
+      targetApp === 'minesweeper'
     ) {
       setActiveApp(targetApp as AppId);
     }
@@ -154,7 +166,7 @@ const MainAppContent: React.FC = () => {
           {activeApp && (
             <AppWindow key={`app-window-${activeApp}`} onDismiss={handleCloseApp}>
               {activeApp === 'messenger' && (
-                <MessengerApp onBack={handleCloseApp} />
+                <MessengerApp onBack={handleCloseApp} onOpenApp={handleOpenApp} />
               )}
               {activeApp === 'safe' && (
                 <SafeApp onBack={handleCloseApp} />
@@ -173,6 +185,9 @@ const MainAppContent: React.FC = () => {
               )}
               {activeApp === 'weather' && (
                 <WeatherApp onBack={handleCloseApp} />
+              )}
+              {activeApp === 'minesweeper' && (
+                <MinesweeperApp onBack={handleCloseApp} />
               )}
             </AppWindow>
           )}
@@ -193,3 +208,5 @@ export const App: React.FC = () => {
     </SettingsProvider>
   );
 };
+
+export default App;

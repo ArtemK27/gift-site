@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { NoteItem } from '../../types';
 import { vibrate, playTapSound } from '../../utils/haptics';
+import { useSettings } from '../../context/SettingsContext';
 
 interface NotesAppProps {
   onBack: () => void;
@@ -30,30 +31,62 @@ interface ChecklistItem {
   isClue?: boolean;
 }
 
+const NOTES_STORAGE_KEY = 'ios18_notes_checklists_v1';
+
+const DEFAULT_CHECKLISTS: Record<string, ChecklistItem[]> = {
+  'note-1': [
+    { id: 'c1', text: 'Взять тончайшее тесто, белое, как снег на пике Сишэн', checked: true },
+    { id: 'c2', text: 'Мясная начинка + сочный лук + масло чили', checked: true },
+    { id: 'c3', text: 'Отмерить ровно 2 грамма священного перца [ЦИФРА 2]', checked: false, isClue: true },
+    { id: 'c4', text: 'Варить ровно 7 минут (стекло в рецепте — метафора, Мо Жань!)', checked: true },
+    { id: 'c5', text: 'Подать Учителю с чаем и забрать третью цифру шифра', checked: false },
+  ],
+  'note-2': [
+    { id: 'c6', text: 'Две огромные черные шубы из эко-меха для Kai Angel & 9mice', checked: true },
+    { id: 'c7', text: '4 банки ледяного напитка и винтажные очки Balenciaga', checked: true },
+    { id: 'c8', text: 'Серебряная мишура на микрофоны и новогодний сетлист', checked: false, isClue: true },
+    { id: 'c9', text: 'Дропнуть Heavy Metal New Year ровно под бой курантов', checked: true },
+    { id: 'c10', text: 'Проверить поле 6×6 от Сану в приложении «Сапёр» для 4-й цифры', checked: false, isClue: true },
+  ],
+};
+
 export const NotesApp: React.FC<NotesAppProps> = ({ onBack }) => {
+  const { cipherCode, unlockQuestStep } = useSettings();
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
 
-  // Checklists inside each note
-  const [checklists, setChecklists] = useState<Record<string, ChecklistItem[]>>({
-    'note-1': [
-      { id: 'c1', text: 'Взять тончайшее тесто, белое, как снег на пике Сишэн', checked: true },
-      { id: 'c2', text: 'Мясная начинка + сочный лук + масло чили', checked: true },
-      { id: 'c3', text: 'Отмерить ровно 2 грамма священного перца [ЦИФРА 2]', checked: false, isClue: true },
-      { id: 'c4', text: 'Варить ровно 7 минут (стекло в рецепте — метафора, Мо Жань!)', checked: true },
-      { id: 'c5', text: 'Подать Учителю с чаем и забрать первую часть шифра', checked: false },
-    ],
-    'note-2': [
-      { id: 'c6', text: 'Две огромные черные шубы из эко-меха для Kai Angel & 9mice', checked: true },
-      { id: 'c7', text: '4 банки ледяного напитка и винтажные очки Balenciaga', checked: true },
-      { id: 'c8', text: 'Ровно 7 пачек серебряной мишуры на микрофоны [ЦИФРА 7]', checked: false, isClue: true },
-      { id: 'c9', text: 'Дропнуть Heavy Metal New Year ровно под бой курантов', checked: true },
-      { id: 'c10', text: 'Сложить шифр: 2 (хунтуни) + 7 (райдер) = «27»', checked: false, isClue: true },
-    ],
+  const [checklists, setChecklists] = useState<Record<string, ChecklistItem[]>>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const raw = window.localStorage.getItem(NOTES_STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch {}
+    }
+    return DEFAULT_CHECKLISTS;
   });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(checklists));
+    } catch {}
+  }, [checklists]);
+
+  useEffect(() => {
+    const onReset = () => {
+      setChecklists(DEFAULT_CHECKLISTS);
+      try {
+        window.localStorage.removeItem(NOTES_STORAGE_KEY);
+      } catch {}
+    };
+    window.addEventListener('ios18_quest_reset', onReset);
+    return () => window.removeEventListener('ios18_quest_reset', onReset);
+  }, []);
 
   const toggleCheck = (noteId: string, itemId: string) => {
     vibrate(20);
     playTapSound(700, 0.04);
+    if (noteId === 'note-1') {
+      unlockQuestStep('notes');
+    }
     setChecklists((prev) => ({
       ...prev,
       [noteId]: prev[noteId].map((item) =>
@@ -73,9 +106,9 @@ export const NotesApp: React.FC<NotesAppProps> = ({ onBack }) => {
       fullText: [
         '«Инструкция для тех, кто не умеет готовить (то есть для Мо Жаня)»:',
         '1. Тесто должно быть тонким и нежным. Лепить аккуратно, не сминать!',
-        '2. В начинку строго 2 грамма священного белого перца. Запомни это число: цифра «2»!',
+        '2. В начинку строго 2 грамма священного белого перца. Запомни это число: третья цифра кода — «2»!',
         '3. Острота бульона согревает сердце даже в лютый новогодний мороз.',
-        '— Чу Ваньнин. (Вторая половина кода начинается с 2).',
+        '— Чу Ваньнин. (Третья цифра от Сейфа: 2).',
       ],
     },
     {
@@ -83,14 +116,13 @@ export const NotesApp: React.FC<NotesAppProps> = ({ onBack }) => {
       title: '🦇 Новогодний райдер Kai Angel & 9mice',
       date: '31 декабря',
       excerpt: 'Шубы в пол, серебряная мишура, черные стекла и тяжелый новогодний металл...',
-      clueDigit: '7',
+      clueDigit: '💣',
       pinned: true,
       fullText: [
         '«BACKSTAGE RIDER: HEAVY METAL NEW YEAR 2027»',
         '1. Черная кожа, серебряные кресты и чистый звук на 120dB.',
-        '2. Ровно 7 пачек сверкающей мишуры! Запомни цифру: «7»!',
-        '3. Соединить с цифрой Учителя: 2 + 7 = «27» для Сейфа!',
-        '— Kai & 9mice. (Вторая половина кода завершена: 27!).',
+        '2. Первые две цифры выдают в чате Новогоднего Комитета за стикер.',
+        '3. Третья цифра у Чу Ваньнина в рецепте, а последнюю четвёртую Сану спрятал в приложении «Сапёр»!',
       ],
     },
   ];
@@ -121,7 +153,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ onBack }) => {
         <div className="flex items-center gap-2 text-[#ffd60a]">
           <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-[#ffd60a]/15 text-[#ffd60a] border border-[#ffd60a]/30 flex items-center gap-1">
             <Key className="w-3 h-3" />
-            Код: ?? 27
+            Код: {cipherCode}
           </span>
           <button className="p-1 rounded-full active:opacity-60">
             <Share className="w-5 h-5" />
@@ -191,6 +223,9 @@ export const NotesApp: React.FC<NotesAppProps> = ({ onBack }) => {
                       onClick={() => {
                         vibrate(20);
                         playTapSound(520, 0.04);
+                        if (note.id === 'note-1') {
+                          unlockQuestStep('notes');
+                        }
                         setActiveNoteId(note.id);
                       }}
                       className="p-3.5 hover:bg-white/[0.04] active:bg-white/[0.08] cursor-pointer transition-colors"
@@ -222,7 +257,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ onBack }) => {
                 <div className="font-bold text-[#ffd60a] mb-1 flex items-center gap-1.5">
                   <span>💡 Новогодняя подсказка</span>
                 </div>
-                Открой обе заметки и отметь пункты в чек-листе. Цифры <strong>2</strong> и <strong>7</strong> дают вторую половину кода: <strong>«27»</strong>!
+                Открой рецепт Чу Ваньнина, чтобы получить третью цифру кода (<strong>«2»</strong>), а четвёртую цифру забери у Сану в приложении <strong>«Сапёр»</strong>!
               </div>
             </motion.div>
           ) : (

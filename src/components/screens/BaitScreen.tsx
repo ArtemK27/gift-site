@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Heart, AlertTriangle, Terminal } from 'lucide-react';
-import { vibrate, playGlitchSound, playTapSound } from '../../utils/haptics';
+import { vibrate, playGlitchSound } from '../../utils/haptics';
 
 interface BaitScreenProps {
   onUnlockStart: () => void;
@@ -69,11 +69,6 @@ export const BaitScreen: React.FC<BaitScreenProps> = ({ onUnlockStart }) => {
           <img
             src="./assets/bait_cover.jpg"
             alt="Уютный Новый Год"
-            onError={(e) => {
-              // Fallback placeholder if image takes a second
-              (e.currentTarget as HTMLImageElement).src =
-                'https://images.unsplash.com/photo-1543589077-47d81606c1bf?auto=format&fit=crop&w=800&q=80';
-            }}
             className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />

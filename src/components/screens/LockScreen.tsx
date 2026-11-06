@@ -11,7 +11,7 @@ interface LockScreenProps {
 
 export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, onOpenNotification }) => {
   const [flashlightOn, setFlashlightOn] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
+  const [notifications] = useState<NotificationItem[]>([
     {
       id: 'notif-1',
       sender: 'Сану',

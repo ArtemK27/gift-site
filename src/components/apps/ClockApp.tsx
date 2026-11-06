@@ -7,16 +7,12 @@ import {
   AlarmClock,
   Timer,
   Hourglass,
-  Play,
-  Pause,
-  RotateCcw,
   Sparkles,
   Bell,
-  Check,
-  Plus,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { vibrate, playTapSound, playUnlockSound } from '../../utils/haptics';
+import { getUtc7TimeSnapshot } from '../../utils/timeZoneUtils';
 
 interface ClockAppProps {
   onBack: () => void;
@@ -27,7 +23,7 @@ type ClockTab = 'world' | 'alarm' | 'stopwatch' | 'timer';
 export const ClockApp: React.FC<ClockAppProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<ClockTab>('world');
 
-  // Real-time tick every second for world clocks & countdown
+  // Real-time tick every second for world clocks, countdown & count-up
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -37,22 +33,24 @@ export const ClockApp: React.FC<ClockAppProps> = ({ onBack }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Compute countdown to New Year 2027
-  // Target: Jan 1, 2027 00:00:00
-  const targetYear = 2027;
-  const targetDate = new Date(targetYear, 0, 1, 0, 0, 0);
-  const diffMs = Math.max(0, targetDate.getTime() - currentTime.getTime());
-  const countdownDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const countdownHours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
-  const countdownMinutes = Math.floor((diffMs / (1000 * 60)) % 60);
-  const countdownSeconds = Math.floor((diffMs / 1000) % 60);
+  const utc7Snap = getUtc7TimeSnapshot(currentTime);
+  const countdownDays = utc7Snap.countdown.days;
+  const countdownHours = utc7Snap.countdown.hours;
+  const countdownMinutes = utc7Snap.countdown.minutes;
+  const countdownSeconds = utc7Snap.countdown.seconds;
 
-  // Time format helper with timezone offset
-  const formatCityTime = (offsetHours: number) => {
-    const d = new Date(currentTime.getTime() + offsetHours * 3600000);
+  // Time format helper relative to UTC+7 (MSK+4)
+  // offsetFromUtc7: 0 = UTC+7 (МСК+4), +2 = Сеул (UTC+9), -4 = Москва (UTC+3)
+  const formatCityTimeFromUtc7 = (offsetFromUtc7Hours: number) => {
+    const utc7Ms = currentTime.getTime() + (7 + offsetFromUtc7Hours) * 3600000;
+    const d = new Date(utc7Ms);
+    const hh = String(d.getUTCHours()).padStart(2, '0');
+    const mm = String(d.getUTCMinutes()).padStart(2, '0');
+    const ss = String(d.getUTCSeconds()).padStart(2, '0');
     return {
-      time: d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      hoursDiff: offsetHours >= 0 ? `+${offsetHours}` : `${offsetHours}`,
+      time: `${hh}:${mm}:${ss}`,
+      hoursDiff:
+        offsetFromUtc7Hours >= 0 ? `+${offsetFromUtc7Hours}` : `${offsetFromUtc7Hours}`,
     };
   };
 
@@ -199,13 +197,34 @@ export const ClockApp: React.FC<ClockAppProps> = ({ onBack }) => {
               className="space-y-4 pb-12"
             >
               {/* Header Title */}
-              <div className="pt-1">
-                <h1 className="text-3xl font-extrabold tracking-tight text-white">
-                  Мировые часы
-                </h1>
-                <p className="text-xs text-white/50 mt-0.5">
-                  Фандомные часовые пояса и таймер 2027
-                </p>
+              <div className="pt-1 flex items-end justify-between">
+                <div>
+                  <h1 className="text-3xl font-extrabold tracking-tight text-white">
+                    Мировые часы
+                  </h1>
+                  <p className="text-xs text-white/50 mt-0.5">
+                    Синхронизация: часовой пояс UTC+7 (МСК+4)
+                  </p>
+                </div>
+                <span className="text-sm font-mono font-bold text-[#ff9f0a]">
+                  {utc7Snap.hms}
+                </span>
+              </div>
+
+              {/* Live Count-Up Banner: "🎉 Мы в 2027 году уже: [ЧЧ:ММ:СС]" */}
+              <div
+                data-testid="clock-2027-elapsed-banner"
+                className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-[#15201c] to-amber-950/50 border border-emerald-400/35 shadow-lg flex items-center justify-between gap-2"
+              >
+                <div className="text-xs font-semibold text-emerald-100">
+                  🎉 Мы в 2027 году уже:{' '}
+                  <span className="font-mono font-extrabold text-amber-300 text-sm ml-1">
+                    {utc7Snap.elapsedIn2027Hms}
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 shrink-0">
+                  UTC+7
+                </span>
               </div>
 
               {/* Real-time New Year 2027 Countdown Banner */}
@@ -213,7 +232,7 @@ export const ClockApp: React.FC<ClockAppProps> = ({ onBack }) => {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-[#ff9f0a] uppercase tracking-wider">
                     <Sparkles className="w-3.5 h-3.5 text-[#ff9f0a]" />
-                    <span>До Нового Года 2027</span>
+                    <span>Обратный отсчёт 2027 (UTC+7)</span>
                   </div>
                   <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#ff9f0a]/20 text-[#ff9f0a] border border-[#ff9f0a]/30">
                     LIVE
@@ -257,7 +276,7 @@ export const ClockApp: React.FC<ClockAppProps> = ({ onBack }) => {
                 </div>
 
                 <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between text-xs text-white/60">
-                  <span>Цель: 1 января 2027, 00:00:00</span>
+                  <span>Пояс: UTC+7 (МСК+4)</span>
                   <button
                     onClick={triggerCelebration}
                     className="text-[#ff9f0a] hover:text-[#ffb340] active:scale-95 font-semibold transition-all flex items-center gap-1"
@@ -267,56 +286,56 @@ export const ClockApp: React.FC<ClockAppProps> = ({ onBack }) => {
                 </div>
               </div>
 
-              {/* Fandom World Clocks List */}
+              {/* Fandom World Clocks List (relative to UTC+7 / MSK+4) */}
               <div className="space-y-2.5">
-                {/* 1. Пентхаус Сану (Сеул) */}
+                {/* 1. Основное время (UTC+7 / МСК+4) */}
+                <div className="bg-[#1c1c1e] rounded-2xl p-4 border border-[#ff9f0a]/30 shadow-md">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="text-xs text-[#ff9f0a]">Сегодня, UTC+7 (МСК+4)</div>
+                      <div className="text-lg font-bold text-white">Новогодняя ночь</div>
+                    </div>
+                    <div className="text-3xl font-light font-mono text-white">
+                      {formatCityTimeFromUtc7(0).time}
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-white/[0.08] flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+                    <span>🎄</span>
+                    <span>Мы в 2027 году уже: {utc7Snap.elapsedIn2027Hms}</span>
+                  </div>
+                </div>
+
+                {/* 2. Пентхаус Сану (Сеул, UTC+9 / +2 ч.) */}
                 <div className="bg-[#1c1c1e] rounded-2xl p-4 border border-white/10 shadow-md">
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="text-xs text-white/45">Сегодня, +6 ч. (Сеул)</div>
+                      <div className="text-xs text-white/45">Сегодня, +2 ч. (Сеул, UTC+9)</div>
                       <div className="text-lg font-bold text-white">Пентхаус Сану</div>
                     </div>
                     <div className="text-3xl font-light font-mono text-white">
-                      {formatCityTime(6).time}
+                      {formatCityTimeFromUtc7(2).time}
                     </div>
                   </div>
                   <div className="mt-2 pt-2 border-t border-white/[0.08] flex items-center gap-1.5 text-xs text-red-400 font-medium">
                     <span>🍷</span>
-                    <span>До Нового Года считанные секунды! 🍷</span>
+                    <span>Шампанское открыто в пентхаусе 🍷</span>
                   </div>
                 </div>
 
-                {/* 2. Пик Сишэн (Цзючжоу) */}
+                {/* 3. Пик Сишэн (Цзючжоу, UTC+8 / +1 ч.) */}
                 <div className="bg-[#1c1c1e] rounded-2xl p-4 border border-white/10 shadow-md">
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="text-xs text-white/45">Сегодня, +5 ч. (Цзючжоу)</div>
+                      <div className="text-xs text-white/45">Сегодня, +1 ч. (Цзючжоу, UTC+8)</div>
                       <div className="text-lg font-bold text-white">Пик Сишэн</div>
                     </div>
                     <div className="text-3xl font-light font-mono text-white">
-                      {formatCityTime(5).time}
+                      {formatCityTimeFromUtc7(1).time}
                     </div>
                   </div>
                   <div className="mt-2 pt-2 border-t border-white/[0.08] flex items-center gap-1.5 text-xs text-cyan-300 font-medium">
                     <span>🥟</span>
                     <span>Чу Ваньнин варит хунтуни 🥟</span>
-                  </div>
-                </div>
-
-                {/* 3. Студия VIPERR (Москва) */}
-                <div className="bg-[#1c1c1e] rounded-2xl p-4 border border-white/10 shadow-md">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="text-xs text-white/45">Сегодня, +0 ч. (Москва)</div>
-                      <div className="text-lg font-bold text-white">Студия VIPERR</div>
-                    </div>
-                    <div className="text-3xl font-light font-mono text-white">
-                      {formatCityTime(0).time}
-                    </div>
-                  </div>
-                  <div className="mt-2 pt-2 border-t border-white/[0.08] flex items-center gap-1.5 text-xs text-amber-300 font-medium">
-                    <span>🦇</span>
-                    <span>Дроп Heavy Metal New Year 🦇</span>
                   </div>
                 </div>
               </div>

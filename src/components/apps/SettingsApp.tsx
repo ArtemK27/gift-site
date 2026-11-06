@@ -1,21 +1,17 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   ChevronLeft,
   X,
   Volume2,
   VolumeX,
   Vibrate,
-  Smartphone,
   Check,
   ShieldAlert,
   Info,
-  HardDrive,
-  Cpu,
   KeyRound,
   RotateCcw,
   Sparkles,
-  ChevronRight,
   Flame,
   Moon,
   CloudSnow,
@@ -32,6 +28,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onBack }) => {
     soundEnabled,
     hapticsEnabled,
     wallpaper,
+    cipherCode,
     setSoundEnabled,
     setHapticsEnabled,
     setWallpaper,
@@ -341,13 +338,13 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onBack }) => {
                 <KeyRound className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
                 <div>
                   <div className="text-xs font-bold text-amber-300 uppercase tracking-wide">
-                    Подсказка шифра Сейфа
+                    Прогресс шифра Сейфа
                   </div>
                   <div className="text-xs font-mono text-zinc-200 mt-0.5">
-                    Шифр сейфа: <span className="font-bold text-amber-400">2027</span>
+                    Собранный шифр: <span className="font-bold text-amber-400">{cipherCode}</span>
                   </div>
                   <div className="text-[11px] text-white/60 mt-0.5">
-                    (ПодвалГрам: <span className="text-amber-300">20</span>, Заметки: <span className="text-amber-300">27</span>)
+                    (ПодвалГрам → Заметки → Сапёр)
                   </div>
                 </div>
               </div>

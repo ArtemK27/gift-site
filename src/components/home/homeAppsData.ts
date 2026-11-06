@@ -7,15 +7,17 @@ import {
   Clock,
   CloudSnow,
   Terminal,
+  Bomb,
   LucideIcon,
 } from 'lucide-react';
 import { AppId } from '../../types';
 
 export interface AppItemConfig {
-  id: AppId | 'console';
+  id: Exclude<AppId, null> | 'console';
   name: string;
   icon: LucideIcon;
   badge?: string;
+  legacyBadge?: string;
   bg: string;
   iconColor?: string;
 }
@@ -25,28 +27,28 @@ export const PAGE_0_APPS: AppItemConfig[] = [
     id: 'messenger',
     name: 'ПодвалГрам',
     icon: MessageCircle,
-    badge: '4',
+    legacyBadge: '4',
     bg: 'bg-gradient-to-tr from-sky-400 via-sky-500 to-blue-600',
   },
   {
     id: 'safe',
     name: 'VIP Сейф',
     icon: Lock,
-    badge: 'PIN',
+    legacyBadge: 'PIN',
     bg: 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600',
   },
   {
     id: 'notes',
     name: 'Заметки',
     icon: FileText,
-    badge: '2',
+    legacyBadge: '2',
     bg: 'bg-gradient-to-tr from-yellow-300 via-amber-400 to-amber-500',
   },
   {
     id: 'gallery',
     name: 'Фото',
     icon: ImageIcon,
-    badge: '3D',
+    legacyBadge: '3D',
     bg: 'bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-600',
   },
   {
@@ -59,24 +61,31 @@ export const PAGE_0_APPS: AppItemConfig[] = [
 
 export const PAGE_1_APPS: AppItemConfig[] = [
   {
+    id: 'minesweeper',
+    name: 'Сапёр',
+    icon: Bomb,
+    legacyBadge: '6×6',
+    bg: 'bg-gradient-to-tr from-slate-400 via-slate-500 to-slate-700',
+  },
+  {
     id: 'clock',
     name: 'Часы',
     icon: Clock,
-    badge: '00:00',
+    legacyBadge: '00:00',
     bg: 'bg-gradient-to-tr from-zinc-900 via-zinc-800 to-black',
   },
   {
     id: 'weather',
     name: 'Погода',
     icon: CloudSnow,
-    badge: '-5°',
+    legacyBadge: '-5°',
     bg: 'bg-gradient-to-tr from-sky-400 via-blue-500 to-indigo-600',
   },
   {
     id: 'console',
     name: 'Консоль',
     icon: Terminal,
-    badge: 'SSH',
+    legacyBadge: 'SSH',
     bg: 'bg-gradient-to-tr from-zinc-800 to-zinc-700',
     iconColor: 'text-emerald-400',
   },

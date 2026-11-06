@@ -1,18 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import {
   ChevronLeft,
   X,
-  CloudSnow,
   Sparkles,
   Wind,
   Droplets,
   Eye,
-  Thermometer,
-  Moon,
   Calendar,
   Clock,
-  Compass,
 } from 'lucide-react';
 import { vibrate, playTapSound, playGlitchSound } from '../../utils/haptics';
 

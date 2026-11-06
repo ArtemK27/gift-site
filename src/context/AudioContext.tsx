@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { useSettings } from './SettingsContext';
 
 export interface Track {
   id: string;
@@ -63,23 +64,32 @@ export interface AudioContextType {
 const AudioContext = createContext<AudioContextType | null>(null);
 
 export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { soundEnabled } = useSettings();
   const [tracks] = useState<Track[]>(DEFAULT_TRACKS);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [isPlaying, setIsPlaying] = useState<boolean>(() => soundEnabled);
   const [currentTime, setCurrentTime] = useState<number>(42);
   const [duration, setDuration] = useState<number>(DEFAULT_TRACKS[0].duration);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isPlayingRef = useRef<boolean>(isPlaying);
+  const soundEnabledRef = useRef<boolean>(soundEnabled);
   const wasPlayingBeforeHiddenRef = useRef<boolean>(false);
+  const wasPlayingBeforeMuteRef = useRef<boolean>(true);
   const fallbackTimerRef = useRef<number | null>(null);
 
   isPlayingRef.current = isPlaying;
+  soundEnabledRef.current = soundEnabled;
   const currentTrack = tracks[currentTrackIndex] || tracks[0];
 
-  // Helper to safely play audio without unhandled promise rejection
+  // Helper to safely play audio without unhandled promise rejection, respecting global soundEnabled
   const safePlayAudio = useCallback((audio: HTMLAudioElement | null) => {
     if (!audio) return;
+    audio.muted = !soundEnabledRef.current;
+    if (!soundEnabledRef.current) {
+      audio.pause();
+      return;
+    }
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch((err) => {
@@ -89,14 +99,34 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
+  // Sync with global soundEnabled switch from SettingsContext
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.muted = !soundEnabled;
+    }
+    if (!soundEnabled) {
+      wasPlayingBeforeMuteRef.current = isPlayingRef.current;
+      audio?.pause();
+      if (isPlayingRef.current) {
+        setIsPlaying(false);
+      }
+    } else if (wasPlayingBeforeMuteRef.current && !document.hidden) {
+      setIsPlaying(true);
+      safePlayAudio(audio);
+    }
+  }, [soundEnabled, safePlayAudio]);
+
   // Forward declaration of nextTrack for event listeners
   const nextTrackRef = useRef<() => void>(() => {});
+  const prevTrackIndexRef = useRef<number>(currentTrackIndex);
 
   // Initialize HTML5 Audio element once
   useEffect(() => {
     const audio = new Audio();
-    audio.preload = 'metadata';
+    audio.preload = 'auto';
     audio.src = currentTrack.src;
+    audio.muted = !soundEnabledRef.current;
     audioRef.current = audio;
 
     const onTimeUpdate = () => {
@@ -111,6 +141,12 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     };
 
+    const onCanPlay = () => {
+      if (isPlayingRef.current && soundEnabledRef.current && audio.paused) {
+        safePlayAudio(audio);
+      }
+    };
+
     const onEnded = () => {
       nextTrackRef.current();
     };
@@ -121,10 +157,11 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('canplay', onCanPlay);
     audio.addEventListener('ended', onEnded);
     audio.addEventListener('error', onError);
 
-    if (isPlayingRef.current) {
+    if (isPlayingRef.current && soundEnabledRef.current) {
       safePlayAudio(audio);
     }
 
@@ -132,23 +169,53 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.pause();
       audio.removeEventListener('timeupdate', onTimeUpdate);
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('canplay', onCanPlay);
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
       audioRef.current = null;
     };
   }, [safePlayAudio]);
 
-  // Update track source on track change
+  // Resume audio automatically on the first user gesture if browser autoplay policy blocked initial mount play()
   useEffect(() => {
+    const unlockAudioOnGesture = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      if (isPlayingRef.current && soundEnabledRef.current && audio.paused) {
+        safePlayAudio(audio);
+      }
+    };
+
+    window.addEventListener('pointerdown', unlockAudioOnGesture, { capture: true, passive: true });
+    window.addEventListener('touchstart', unlockAudioOnGesture, { capture: true, passive: true });
+    window.addEventListener('click', unlockAudioOnGesture, { capture: true, passive: true });
+    window.addEventListener('keydown', unlockAudioOnGesture, { capture: true, passive: true });
+
+    return () => {
+      window.removeEventListener('pointerdown', unlockAudioOnGesture, { capture: true });
+      window.removeEventListener('touchstart', unlockAudioOnGesture, { capture: true });
+      window.removeEventListener('click', unlockAudioOnGesture, { capture: true });
+      window.removeEventListener('keydown', unlockAudioOnGesture, { capture: true });
+    };
+  }, [safePlayAudio]);
+
+  // Update track source ONLY when currentTrackIndex actually changes
+  useEffect(() => {
+    if (prevTrackIndexRef.current === currentTrackIndex) {
+      return;
+    }
+    prevTrackIndexRef.current = currentTrackIndex;
+
     const audio = audioRef.current;
     if (!audio) return;
 
     audio.src = currentTrack.src;
     audio.currentTime = 0;
+    audio.muted = !soundEnabledRef.current;
     setCurrentTime(0);
     setDuration(currentTrack.duration);
 
-    if (isPlayingRef.current) {
+    if (isPlayingRef.current && soundEnabledRef.current) {
       safePlayAudio(audio);
     }
   }, [currentTrackIndex, currentTrack.src, currentTrack.duration, safePlayAudio]);
@@ -201,7 +268,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           wasPlayingBeforeHiddenRef.current = false;
         }
       } else {
-        if (wasPlayingBeforeHiddenRef.current) {
+        if (wasPlayingBeforeHiddenRef.current && soundEnabledRef.current) {
           wasPlayingBeforeHiddenRef.current = false;
           safePlayAudio(audioRef.current);
           setIsPlaying(true);
@@ -217,11 +284,13 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const play = useCallback(() => {
     setIsPlaying(true);
+    wasPlayingBeforeMuteRef.current = true;
     safePlayAudio(audioRef.current);
   }, [safePlayAudio]);
 
   const pause = useCallback(() => {
     setIsPlaying(false);
+    wasPlayingBeforeMuteRef.current = false;
     audioRef.current?.pause();
   }, []);
 

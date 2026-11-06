@@ -38,6 +38,77 @@ body {
   }
 }
 
+/* Vinyl spin animation with smooth pause/resume support via animation-play-state */
+@keyframes vinylSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-vinyl-spin {
+  animation: vinylSpin 4.5s linear infinite;
+}
+
+.animate-vinyl-spin-slow {
+  animation: vinylSpin 7s linear infinite;
+}
+
+/* Equalizer bar animation for Dynamic Island */
+@keyframes eqBounce1 {
+  0%, 100% { transform: scaleY(0.35); }
+  45% { transform: scaleY(1); }
+  75% { transform: scaleY(0.6); }
+}
+
+@keyframes eqBounce2 {
+  0%, 100% { transform: scaleY(0.85); }
+  35% { transform: scaleY(0.3); }
+  70% { transform: scaleY(1); }
+}
+
+@keyframes eqBounce3 {
+  0%, 100% { transform: scaleY(0.45); }
+  30% { transform: scaleY(0.95); }
+  65% { transform: scaleY(0.25); }
+}
+
+@keyframes eqBounce4 {
+  0%, 100% { transform: scaleY(0.7); }
+  50% { transform: scaleY(0.35); }
+  80% { transform: scaleY(0.95); }
+}
+
+.animate-eq-1 {
+  animation: eqBounce1 0.85s ease-in-out infinite;
+  transform-origin: bottom;
+}
+.animate-eq-2 {
+  animation: eqBounce2 0.72s ease-in-out infinite;
+  transform-origin: bottom;
+}
+.animate-eq-3 {
+  animation: eqBounce3 0.92s ease-in-out infinite;
+  transform-origin: bottom;
+}
+.animate-eq-4 {
+  animation: eqBounce4 0.78s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+/* Custom glow shadows */
+.shadow-neon-gold {
+  box-shadow: 0 0 20px rgba(255, 209, 92, 0.4);
+}
+.shadow-neon-cyan {
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.4);
+}
+.shadow-neon-crimson {
+  box-shadow: 0 0 20px rgba(255, 51, 102, 0.4);
+}
+
 /* Hide scrollbars for clean native app look */
 ::-webkit-scrollbar {
   display: none;
