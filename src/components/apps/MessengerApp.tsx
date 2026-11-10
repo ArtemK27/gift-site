@@ -51,8 +51,11 @@ export const MessengerApp: React.FC<{
   const { questProgress, cipherCode } = useSettings();
   const [stickersOpen, setStickersOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [unreadBelowCount, setUnreadBelowCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevThreadIdRef = useRef<ThreadId | null>(null);
+  const prevMsgCountRef = useRef<number>(0);
+  const isNearBottomRef = useRef<boolean>(true);
   const reducedMotion = useReducedMotion();
 
   const thread = THREADS.find((item) => item.id === state.activeThread);
@@ -62,29 +65,78 @@ export const MessengerApp: React.FC<{
     item.title.toLocaleLowerCase('ru').includes(normalizedQuery)
   );
 
-  useEffect(() => {
+  const handleMessagesScroll = () => {
     const el = scrollRef.current;
-    if (!thread || !el) {
-      prevThreadIdRef.current = null;
-      return;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const nearBottom = distanceFromBottom <= 72;
+    isNearBottomRef.current = nearBottom;
+    if (nearBottom && unreadBelowCount > 0) {
+      setUnreadBelowCount(0);
     }
-    const isNewThreadOpen = prevThreadIdRef.current !== thread.id;
-    prevThreadIdRef.current = thread.id;
+  };
 
-    if (isNewThreadOpen || reducedMotion) {
+  const scrollToBottom = (smooth = true) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    isNearBottomRef.current = true;
+    setUnreadBelowCount(0);
+    if (!smooth || reducedMotion) {
       el.scrollTop = el.scrollHeight;
-      requestAnimationFrame(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      });
     } else {
       el.scrollTo({
         top: el.scrollHeight,
         behavior: 'smooth',
       });
     }
-  }, [thread?.id, messages.length, state.typing, reducedMotion]);
+  };
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!thread || !el) {
+      prevThreadIdRef.current = null;
+      prevMsgCountRef.current = 0;
+      setUnreadBelowCount(0);
+      return;
+    }
+
+    const isNewThreadOpen = prevThreadIdRef.current !== thread.id;
+    if (isNewThreadOpen) {
+      prevThreadIdRef.current = thread.id;
+      prevMsgCountRef.current = messages.length;
+      isNearBottomRef.current = true;
+      setUnreadBelowCount(0);
+      el.scrollTop = el.scrollHeight;
+      requestAnimationFrame(() => {
+        if (scrollRef.current && isNearBottomRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
+      return;
+    }
+
+    // Check if new messages arrived in the active thread
+    if (messages.length > prevMsgCountRef.current) {
+      const addedCount = messages.length - prevMsgCountRef.current;
+      const lastMsg = messages[messages.length - 1];
+      prevMsgCountRef.current = messages.length;
+
+      // Auto-scroll only if user sent the message themselves or is already at the bottom
+      if (lastMsg?.isMe || isNearBottomRef.current) {
+        scrollToBottom(true);
+      } else {
+        setUnreadBelowCount((prev) => prev + addedCount);
+      }
+    }
+  }, [thread?.id, messages.length, reducedMotion]);
+
+  // If typing indicator appears and user is already at the bottom, keep typing bubble in view
+  useEffect(() => {
+    if (!thread || state.typing !== thread.id) return;
+    if (isNearBottomRef.current) {
+      scrollToBottom(true);
+    }
+  }, [state.typing, thread?.id]);
 
   const goBack = () => {
     vibrate(15);
@@ -115,7 +167,7 @@ export const MessengerApp: React.FC<{
               animate={{ opacity: 1, x: 0 }}
               exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 24 }}
               transition={{ type: 'spring', stiffness: 400, damping: 32, mass: 0.75 }}
-              className="flex items-center gap-2.5 w-full min-w-0"
+              className="flex items-center gap-2.5 w-full min-w-0 pr-2"
             >
               <button
                 type="button"
@@ -155,15 +207,6 @@ export const MessengerApp: React.FC<{
                   )}
                 </p>
               </div>
-
-              <button
-                type="button"
-                aria-label="Закрыть мессенджер"
-                onClick={onBack}
-                className="w-8 h-8 grid place-items-center shrink-0 rounded-full bg-white/[0.07] hover:bg-white/15 active:scale-90 text-white/75 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
-              >
-                <X size={16} />
-              </button>
             </motion.div>
           ) : (
             <motion.div
@@ -409,6 +452,7 @@ export const MessengerApp: React.FC<{
               {/* Messages Container */}
               <div
                 ref={scrollRef}
+                onScroll={handleMessagesScroll}
                 data-testid="chat-messages"
                 className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-3 py-4 space-y-3"
               >
@@ -542,6 +586,26 @@ export const MessengerApp: React.FC<{
                   </motion.div>
                 )}
               </div>
+
+              {/* Floating New Messages Indicator when scrolled up */}
+              <AnimatePresence>
+                {unreadBelowCount > 0 && (
+                  <motion.button
+                    type="button"
+                    initial={{ opacity: 0, y: 12, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 12, scale: 0.9 }}
+                    onClick={() => {
+                      vibrate(15);
+                      playTapSound(520, 0.03);
+                      scrollToBottom(true);
+                    }}
+                    className="absolute bottom-[88px] right-4 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2866d9]/95 hover:bg-[#3b82f6] text-white text-xs font-semibold shadow-[0_6px_20px_rgba(0,0,0,0.6)] border border-sky-300/30 backdrop-blur-md"
+                  >
+                    <span>Новые сообщения ({unreadBelowCount}) ↓</span>
+                  </motion.button>
+                )}
+              </AnimatePresence>
 
               {/* Composer & Animated Sticker Drawer */}
               <div className="shrink-0 min-w-0 border-t border-white/10 bg-[#14151b]/95 backdrop-blur-xl px-3 pt-2 pb-9">

@@ -12,6 +12,7 @@ export interface QuestProgressState {
   committeeUnlocked: boolean;
   notesUnlocked: boolean;
   minesweeperUnlocked: boolean;
+  rootNoteDecrypted?: boolean;
 }
 
 export const GRID_SIZE = 6;
@@ -20,15 +21,15 @@ export const TOTAL_MINES = 4;
 /**
  * Formats the 4-digit Safe cipher progressively based on unlocked quest steps.
  * Initial state: "????"
- * Committee sticker -> "20??"
- * Notes clue -> "??2?"
+ * Notes ROOT spoiler scratched -> 2nd digit is "4" ("?4??")
+ * Committee sticker -> "2?2?"
  * Minesweeper win -> "???7"
- * All completed -> "2027"
+ * All completed -> "2427"
  */
 export function formatCipherProgress(progress: QuestProgressState): string {
   const d1 = progress.committeeUnlocked ? '2' : '?';
-  const d2 = progress.committeeUnlocked ? '0' : '?';
-  const d3 = progress.notesUnlocked ? '2' : '?';
+  const d2 = progress.notesUnlocked ? '4' : '?';
+  const d3 = progress.committeeUnlocked ? '2' : '?';
   const d4 = progress.minesweeperUnlocked ? '7' : '?';
   return `${d1}${d2}${d3}${d4}`;
 }

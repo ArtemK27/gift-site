@@ -1,0 +1,6 @@
+{
+  "name": "Новогодний Сюрприз 🎄 — Смартфон iOS 18",
+  "description": "Интерактивное веб-приложение-подарок в виде смартфона iOS 18: открытка, экран блокировки, рабочий стол, ПодвалГрам, музыкальный Dynamic Island, заметки, фото и VIP Сейф.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

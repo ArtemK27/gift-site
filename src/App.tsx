@@ -13,6 +13,7 @@ import { SettingsApp } from './components/apps/SettingsApp';
 import { ClockApp } from './components/apps/ClockApp';
 import { WeatherApp } from './components/apps/WeatherApp';
 import { MinesweeperApp } from './components/apps/MinesweeperApp';
+import { ConsoleApp } from './components/apps/ConsoleApp';
 import { SettingsProvider } from './context/SettingsContext';
 import { AudioProvider } from './context/AudioContext';
 import { MessengerProvider, useMessenger } from './context/MessengerContext';
@@ -56,6 +57,7 @@ const getInitialScreen = (): ScreenType => {
 const MainAppContent: React.FC = () => {
   const [screen, setScreen] = useState<ScreenType>(getInitialScreen);
   const [activeApp, setActiveApp] = useState<AppId>(null);
+  const [initialNoteId, setInitialNoteId] = useState<string | null>(null);
   const { openThread } = useMessenger();
 
   // Prime Web Audio API on first user interaction
@@ -86,7 +88,8 @@ const MainAppContent: React.FC = () => {
       targetApp === 'settings' ||
       targetApp === 'clock' ||
       targetApp === 'weather' ||
-      targetApp === 'minesweeper'
+      targetApp === 'minesweeper' ||
+      targetApp === 'console'
     ) {
       setActiveApp(targetApp as AppId);
     }
@@ -99,6 +102,11 @@ const MainAppContent: React.FC = () => {
   const handleCloseApp = () => {
     if (activeApp === 'messenger') openThread(null);
     setActiveApp(null);
+  };
+
+  const handleOpenUnlockedRootNote = () => {
+    setInitialNoteId('note-root');
+    setActiveApp('notes');
   };
 
   // If on BaitScreen, render full cozy card experience with responsive chassis
@@ -172,7 +180,11 @@ const MainAppContent: React.FC = () => {
                 <SafeApp onBack={handleCloseApp} />
               )}
               {activeApp === 'notes' && (
-                <NotesApp onBack={handleCloseApp} />
+                <NotesApp
+                  onBack={handleCloseApp}
+                  initialNoteId={initialNoteId}
+                  onClearInitialNote={() => setInitialNoteId(null)}
+                />
               )}
               {activeApp === 'gallery' && (
                 <GalleryApp onBack={handleCloseApp} />
@@ -188,6 +200,12 @@ const MainAppContent: React.FC = () => {
               )}
               {activeApp === 'minesweeper' && (
                 <MinesweeperApp onBack={handleCloseApp} />
+              )}
+              {activeApp === 'console' && (
+                <ConsoleApp
+                  onBack={handleCloseApp}
+                  onOpenRootNote={handleOpenUnlockedRootNote}
+                />
               )}
             </AppWindow>
           )}

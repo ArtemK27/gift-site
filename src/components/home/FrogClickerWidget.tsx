@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { vibrate, playTapSound } from '../../utils/haptics';
+import { vibrate, playFrogCroakSound } from '../../utils/haptics';
 
 const FROG_STORAGE_KEY = 'ios18_frog_clicks_v1';
 
 const FROG_STATUSES = [
   'Жаба довольна',
-  '+100 к удаче на сессии',
-  'Ква-ква, с Новым годом!',
-  'Мандариновый дзен 🍊',
-  'Стипендия приманивается',
-  'Босс новогоднего болота',
+  '+100 к удаче ✨',
+  'С Новым годом! 🎄',
+  'Дзен и цитрусы 🍊',
+  'Босс болота 👑',
 ];
 
 interface FrogParticle {
@@ -67,8 +66,8 @@ export const FrogClickerWidget: React.FC = () => {
       }
     } catch {}
     vibrate(20);
-    // Play a playful frog-like double tone
-    playTapSound(340 + (clicks % 5) * 35, 0.05);
+    // Play a short playful frog croak ("ква") sound
+    playFrogCroakSound();
 
     setClicks((prev) => prev + 1);
     setSquishKey((prev) => prev + 1);
@@ -115,24 +114,26 @@ export const FrogClickerWidget: React.FC = () => {
           handleFrogClick(e as unknown as React.MouseEvent<HTMLDivElement>);
         }
       }}
-      className="h-[148px] rounded-[26px] bg-gradient-to-br from-[#0d2218]/90 via-[#101c18]/90 to-[#141824]/90 hover:from-[#112a1e]/95 border border-emerald-400/25 backdrop-blur-2xl p-3.5 flex flex-col justify-between shadow-[0_8px_30px_rgba(0,0,0,0.45)] relative overflow-hidden cursor-pointer select-none"
+      className="h-[148px] rounded-[26px] bg-gradient-to-br from-[#0d2218]/90 via-[#101c18]/90 to-[#141824]/90 hover:from-[#112a1e]/95 border border-emerald-400/25 backdrop-blur-2xl p-3 sm:p-3.5 flex flex-col justify-between shadow-[0_8px_30px_rgba(0,0,0,0.45)] relative overflow-hidden cursor-pointer select-none"
     >
       {/* Subtle ambient lily-pad glow */}
       <div className="pointer-events-none absolute -top-8 -right-8 w-24 h-24 rounded-full bg-emerald-400/15 blur-xl" />
 
-      {/* Top Row: Title + SVG Cute Meme Frog in Santa Hat */}
-      <div className="flex items-start justify-between gap-1 relative z-10">
-        <div className="min-w-0">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">
-            ЖАБА УДАЧИ 2027 🐸
-          </span>
-          <span
-            data-testid="frog-status-text"
-            className="text-[11px] text-white/85 font-medium leading-tight block mt-0.5 line-clamp-2"
-          >
-            {currentStatus}
-          </span>
-        </div>
+      {/* Top Header: Full-width single line so it never wraps */}
+      <div className="relative z-10 flex items-center justify-between gap-1 min-w-0">
+        <span className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-wide text-emerald-300 whitespace-nowrap">
+          ЖАБА УДАЧИ 2027 🐸
+        </span>
+      </div>
+
+      {/* Middle Row: Status Text + SVG Cute Meme Frog in Santa Hat */}
+      <div className="flex items-center justify-between gap-1.5 relative z-10 my-auto">
+        <span
+          data-testid="frog-status-text"
+          className="text-[10.5px] sm:text-[11px] text-white/90 font-medium leading-snug min-w-0 flex-1"
+        >
+          {currentStatus}
+        </span>
 
         {/* Multi-layered SVG Meme Frog in New Year Santa Hat */}
         <motion.div
@@ -147,7 +148,7 @@ export const FrogClickerWidget: React.FC = () => {
               : undefined
           }
           transition={{ duration: 0.34, ease: 'easeOut' }}
-          className="w-14 h-14 shrink-0 -mt-1 -mr-0.5 drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
+          className="w-12 h-12 shrink-0 -my-1 -mr-0.5 drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
         >
           <svg viewBox="0 0 72 72" fill="none" className="w-full h-full">
             <defs>
@@ -223,11 +224,11 @@ export const FrogClickerWidget: React.FC = () => {
       </div>
 
       {/* Bottom Row: Click Counter */}
-      <div className="relative z-10 pt-1.5 border-t border-white/10 flex items-center justify-between text-[11px] font-mono">
-        <span className="text-emerald-300 font-bold" data-testid="frog-click-counter">
-          Нажамкано: {clicks} кваков
+      <div className="relative z-10 pt-1 border-t border-white/10 flex items-center justify-between gap-1 text-[9.5px] sm:text-[10px] font-mono whitespace-nowrap">
+        <span className="text-emerald-300 font-bold truncate" data-testid="frog-click-counter">
+          Кваков: {clicks}
         </span>
-        <span className="text-[10px] text-amber-300/90">ЖМЯК 🍊</span>
+        <span className="text-amber-300/90 shrink-0 font-semibold">ЖМЯК 🍊</span>
       </div>
 
       {/* Flying Tangerine & Coin Particles */}

@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { ShieldAlert, ChevronUp, Lock, Flashlight, Camera } from 'lucide-react';
 import { NotificationItem } from '../../types';
-import { vibrate, playTapSound, playUnlockSound } from '../../utils/haptics';
+import {
+  vibrate,
+  playTapSound,
+  playUnlockSound,
+  playCameraShutterSound,
+} from '../../utils/haptics';
 
 interface LockScreenProps {
   onUnlock: () => void;
@@ -11,6 +16,7 @@ interface LockScreenProps {
 
 export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, onOpenNotification }) => {
   const [flashlightOn, setFlashlightOn] = useState(false);
+  const [shutterFlashKey, setShutterFlashKey] = useState(0);
   const [notifications] = useState<NotificationItem[]>([
     {
       id: 'notif-1',
@@ -57,6 +63,13 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, onOpenNotifica
     setFlashlightOn((prev) => !prev);
   };
 
+  const handleCameraShot = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    vibrate([15, 30, 15]);
+    playCameraShutterSound();
+    setShutterFlashKey((prev) => prev + 1);
+  };
+
   return (
     <motion.div
       style={{ opacity: lockOpacity, scale: lockScale }}
@@ -66,6 +79,21 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, onOpenNotifica
       onDragEnd={handleDragEnd}
       className="relative w-full h-full flex flex-col justify-between pt-10 pb-4 px-6 select-none z-10 cursor-grab active:cursor-grabbing font-sans"
     >
+      {/* iOS Screenshot / Camera Shutter Micro Flash Overlay */}
+      <AnimatePresence>
+        {shutterFlashKey > 0 && (
+          <motion.div
+            key={shutterFlashKey}
+            data-testid="lock-camera-flash"
+            initial={{ opacity: 0.9, scale: 0.985 }}
+            animate={{ opacity: 0, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.38, ease: 'easeOut' }}
+            className="pointer-events-none absolute inset-0 z-50 bg-white border-[6px] border-white/90 rounded-[inherit]"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Top iOS Lock & Date & Clock */}
       <div className="flex flex-col items-center">
         {/* iOS Lock Glyph */}
@@ -85,13 +113,6 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, onOpenNotifica
         {/* Giant iOS Clock Typography */}
         <div className="text-[82px] font-extrabold tracking-tighter text-white/95 leading-none drop-shadow-[0_4px_28px_rgba(255,255,255,0.18)] font-sans">
           23:59
-        </div>
-
-        {/* iOS Weather / Event Widget Pill */}
-        <div className="mt-2.5 px-3 py-1 rounded-full bg-black/30 border border-white/10 backdrop-blur-md flex items-center gap-2 text-xs text-white/90 shadow-sm">
-          <span className="text-cyan-300 font-medium">❄️ -5°C</span>
-          <span className="w-1 h-1 rounded-full bg-white/40" />
-          <span className="text-amber-200/90 font-medium">Снег в новогоднюю ночь</span>
         </div>
       </div>
 
@@ -202,6 +223,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, onOpenNotifica
         {/* Quick Action Buttons: Flashlight & Camera */}
         <div className="w-full flex items-center justify-between px-3 pt-1">
           <button
+            type="button"
             onClick={toggleFlashlight}
             className={`w-12 h-12 rounded-full backdrop-blur-2xl border flex items-center justify-center transition-all duration-150 active:scale-90 shadow-lg ${
               flashlightOn
@@ -214,11 +236,9 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, onOpenNotifica
           </button>
 
           <button
-            onClick={() => {
-              vibrate(20);
-              playTapSound();
-              if (onOpenNotification) onOpenNotification('gallery');
-            }}
+            type="button"
+            data-testid="lock-camera-btn"
+            onClick={handleCameraShot}
             className="w-12 h-12 rounded-full bg-black/40 border border-white/20 backdrop-blur-2xl text-white flex items-center justify-center transition-all duration-150 active:scale-90 hover:bg-black/60 shadow-lg"
             title="Камера"
           >
@@ -229,3 +249,4 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, onOpenNotifica
     </motion.div>
   );
 };
+

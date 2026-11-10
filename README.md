@@ -1,58 +1,20 @@
-# 🎄 Чужой смартфон в новогоднюю ночь
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-Интерактивное веб-приложение-подарок в виде смартфона iOS 18: открытка, экран блокировки, рабочий стол, ПодвалГрам, заметки, фото и VIP Сейф. Персонажи: Сану, Чу Ваньнин и Мо Жань, Kai Angel & 9mice.
+# Run and deploy your AI Studio app
 
-## Открыть сайт
+This contains everything you need to run your app locally.
 
-**GitHub Pages:** https://artemk27.github.io/gift-site/
+View your app in AI Studio: https://ai.studio/apps/fd3f54ef-6f78-4099-b954-0c01c97bd43a
 
-**Исходники:** https://github.com/ArtemK27/gift-site
+## Run Locally
 
-Актуальная сборка опубликована 2026-11-05. Для проверки на телефоне открой ссылку выше; если видишь старую версию, обнови страницу без кеша или открой приватную вкладку.
+**Prerequisites:**  Node.js
 
-## Перед продолжением работы
 
-1. [PROJECT_STATE.md](./PROJECT_STATE.md) — архитектура, текущие решения и передача состояния.
-2. [TEST_READY.md](./TEST_READY.md) — реальные проверки и ограничения, не обещание готовности релиза.
-3. [REVIEW_NOTES.md](./REVIEW_NOTES.md) — попутные замечания и незакрытые вопросы, не полный аудит.
-
-## Локальный запуск
-
-Нужны Node.js/npm и Git. Команды выполняются из корня репозитория; в Windows при блокировке PowerShell используй `npm.cmd`/`npx.cmd`.
-
-```text
-npm ci
-npm run dev
-npm run build
-npm run preview
-```
-
-Стек: React 19, TypeScript, Vite 6, Tailwind CSS 3, Framer Motion 12. Фактические зависимости зафиксированы в `package-lock.json`.
-
-## Проверки
-
-```text
-npx playwright install chromium
-npm run test:e2e
-npx playwright test tests/e2e/home-motion-regressions.spec.ts tests/e2e/milestone3-homescreen-apps.spec.ts tests/e2e/tier4-scenarios.spec.ts
-```
-
-Последний запуск трёх перечисленных наборов: **26/26 PASS** (2026-11-05), профили 430×932 и 1280×800. Полный набор в этой сессии не запускался. Исторические падения и ограничения перечислены в TEST_READY.md. Сборка проходит с предупреждением о JS chunk >500 kB.
-
-## Публикация
-
-```text
-npm run deploy
-```
-
-Команда собирает `dist/` и через `gh-pages` публикует его в существующий `origin`, ветку `gh-pages`, с `.nojekyll`, без force push. Нужны права записи в репозиторий. На GitHub Pages должен быть выбран источник `gh-pages` / `/ (root)`. Исходники ветки `main` коммитятся и отправляются отдельно; деплой не публикует незакоммиченные исходные файлы в `main`.
-
-Не запускай прежний PowerShell-скрипт с `git init` внутри `dist` и `git push -f`. Токены не добавлять в исходники, команды, документацию или логи.
-
-## Состояние приёмки
-
-- Свайпы предварительно одобрены Кириллом на ПК; проверка на настоящем телефоне ещё нужна.
-- Отдельное расположение музыкального пузырька принято: пользователь подтвердил, что он больше не пропадает.
-- Полный квест на опубликованном сайте проверен обычным Playwright Chromium при 430×932; ошибок консоли/страницы и HTTP ≥400 не было.
-- MCP Playwright не запускается из-за отсутствующего настроенного Chrome. Просмотр сохранённых PNG заблокирован инструментом: визуальная приёмка не завершена.
-- Промокоды в клиенте — демонстрационные строки, действительность сертификатов не подтверждена. ПИН и подсказки намеренно находятся в исходниках: это игровой квест, не защищённое хранилище.
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

@@ -41,7 +41,7 @@ export const PAGE_0_APPS: AppItemConfig[] = [
     id: 'notes',
     name: 'Заметки',
     icon: FileText,
-    legacyBadge: '2',
+    legacyBadge: '3',
     bg: 'bg-gradient-to-tr from-yellow-300 via-amber-400 to-amber-500',
   },
   {

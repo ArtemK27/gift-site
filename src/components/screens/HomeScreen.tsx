@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   motion,
   PanInfo,
-  AnimatePresence,
   useMotionValue,
   animate,
   useReducedMotion,
@@ -20,7 +19,6 @@ interface HomeScreenProps {
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const panStartX = useRef(0);
@@ -71,14 +69,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
     settlePage(nextPage);
   };
 
-  const handleLaunch = (appId: AppId | 'console') => {
-    if (appId === 'console') {
-      vibrate([25, 50, 25]);
-      playTapSound(320, 0.04);
-      setToastMessage('ROOT PRIVILEGES: GRANTED 🔪');
-      setTimeout(() => setToastMessage(null), 2400);
-      return;
-    }
+  const handleLaunch = (appId: AppId) => {
     vibrate(25);
     playTapSound(520, 0.05);
     onOpenApp(appId);
@@ -130,9 +121,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
           className="flex w-full h-full touch-pan-y"
         >
           {/* Page 0: Main / Quest */}
-          <div className="w-full h-full shrink-0 flex flex-col justify-between px-6">
+          <div className="w-full h-full shrink-0 flex flex-col justify-start px-6">
             <Page0Widgets onOpenApp={onOpenApp} />
-            <div className="grid grid-cols-4 gap-4 py-4 px-1">
+            <div className="grid grid-cols-4 gap-4 mt-20 pb-4 px-1">
               {PAGE_0_APPS.map((app, idx) => (
                 <AppIcon
                   key={app.id}
@@ -150,9 +141,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
           </div>
 
           {/* Page 1: Companion Apps & Frog Clicker Widget */}
-          <div className="w-full h-full shrink-0 flex flex-col justify-between px-6">
+          <div className="w-full h-full shrink-0 flex flex-col justify-start px-6">
             <Page1Widgets onOpenApp={onOpenApp} />
-            <div className="grid grid-cols-4 gap-4 py-4 px-1">
+            <div className="grid grid-cols-4 gap-4 mt-20 pb-4 px-1">
               {PAGE_1_APPS.map((app, idx) => (
                 <AppIcon
                   key={app.id}
@@ -188,20 +179,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
           />
         ))}
       </div>
-
-      {/* Easter Egg Toast Notification */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="absolute top-12 left-6 right-6 z-50 p-2.5 rounded-2xl bg-zinc-900/95 border border-emerald-500/40 text-emerald-400 text-xs font-mono text-center shadow-2xl backdrop-blur-md pointer-events-none"
-          >
-            {toastMessage}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

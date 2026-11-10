@@ -259,28 +259,28 @@ export const WeatherApp: React.FC<WeatherAppProps> = ({ onBack }) => {
   }, []);
 
   const hourlyForecast = [
-    { time: 'Сейчас', temp: '-5°', icon: '❄️', highlight: false, note: '' },
-    { time: '23:00', temp: '-5°', icon: '❄️', highlight: false, note: '' },
-    { time: '00:00', temp: '-5°', icon: '🎆', highlight: true, note: 'Новый Год! Салют' },
-    { time: '01:00', temp: '-6°', icon: '🌙', highlight: false, note: '' },
-    { time: '02:00', temp: '-7°', icon: '☁️', highlight: false, note: '' },
-    { time: '03:00', temp: '-7°', icon: '🦇', highlight: true, note: 'Рейв VIPERR' },
-    { time: '04:00', temp: '-8°', icon: '❄️', highlight: false, note: '' },
-    { time: '05:00', temp: '-8°', icon: '❄️', highlight: false, note: '' },
-    { time: '06:00', temp: '-7°', icon: '🌅', highlight: false, note: '' },
+    { time: 'Сейчас', temp: '-20°', icon: '❄️', highlight: false, note: '' },
+    { time: '23:00', temp: '-20°', icon: '❄️', highlight: false, note: '' },
+    { time: '00:00', temp: '-20°', icon: '🎆', highlight: true, note: 'Новый Год! Салют' },
+    { time: '01:00', temp: '-21°', icon: '🌙', highlight: false, note: '' },
+    { time: '02:00', temp: '-22°', icon: '☁️', highlight: false, note: '' },
+    { time: '03:00', temp: '-22°', icon: '🦇', highlight: true, note: 'Рейв VIPERR' },
+    { time: '04:00', temp: '-23°', icon: '❄️', highlight: false, note: '' },
+    { time: '05:00', temp: '-24°', icon: '❄️', highlight: false, note: '' },
+    { time: '06:00', temp: '-22°', icon: '🌅', highlight: false, note: '' },
   ];
 
   const tenDayForecast = [
-    { day: 'Сегодня', icon: '❄️', min: -8, max: -2, currentMinOffset: 25, currentMaxOffset: 70 },
-    { day: 'Ср 1 янв', icon: '🎆', min: -7, max: -1, currentMinOffset: 30, currentMaxOffset: 78 },
-    { day: 'Чт 2 янв', icon: '☁️', min: -9, max: -3, currentMinOffset: 20, currentMaxOffset: 65 },
-    { day: 'Пт 3 янв', icon: '❄️', min: -10, max: -4, currentMinOffset: 15, currentMaxOffset: 60 },
-    { day: 'Сб 4 янв', icon: '🥟', min: -6, max: 0, currentMinOffset: 35, currentMaxOffset: 85 },
-    { day: 'Вс 5 янв', icon: '🦇', min: -5, max: 1, currentMinOffset: 40, currentMaxOffset: 92 },
-    { day: 'Пн 6 янв', icon: '❄️', min: -7, max: -2, currentMinOffset: 28, currentMaxOffset: 72 },
-    { day: 'Вт 7 янв', icon: '✨', min: -8, max: -3, currentMinOffset: 22, currentMaxOffset: 68 },
-    { day: 'Ср 8 янв', icon: '☁️', min: -11, max: -5, currentMinOffset: 10, currentMaxOffset: 55 },
-    { day: 'Чт 9 янв', icon: '❄️', min: -9, max: -4, currentMinOffset: 18, currentMaxOffset: 62 },
+    { day: 'Сегодня', icon: '❄️', min: -24, max: -17, currentMinOffset: 25, currentMaxOffset: 70 },
+    { day: 'Ср 1 янв', icon: '🎆', min: -22, max: -16, currentMinOffset: 30, currentMaxOffset: 78 },
+    { day: 'Чт 2 янв', icon: '☁️', min: -25, max: -18, currentMinOffset: 20, currentMaxOffset: 65 },
+    { day: 'Пт 3 янв', icon: '❄️', min: -26, max: -19, currentMinOffset: 15, currentMaxOffset: 60 },
+    { day: 'Сб 4 янв', icon: '🥟', min: -21, max: -15, currentMinOffset: 35, currentMaxOffset: 85 },
+    { day: 'Вс 5 янв', icon: '🦇', min: -20, max: -14, currentMinOffset: 40, currentMaxOffset: 92 },
+    { day: 'Пн 6 янв', icon: '❄️', min: -23, max: -17, currentMinOffset: 28, currentMaxOffset: 72 },
+    { day: 'Вт 7 янв', icon: '✨', min: -24, max: -18, currentMinOffset: 22, currentMaxOffset: 68 },
+    { day: 'Ср 8 янв', icon: '☁️', min: -27, max: -20, currentMinOffset: 10, currentMaxOffset: 55 },
+    { day: 'Чт 9 янв', icon: '❄️', min: -25, max: -19, currentMinOffset: 18, currentMaxOffset: 62 },
   ];
 
   return (
@@ -336,13 +336,13 @@ export const WeatherApp: React.FC<WeatherAppProps> = ({ onBack }) => {
 
           <div className="py-2">
             <div className="text-7xl font-extralight tracking-tighter text-white">
-              -5°
+              -20°
             </div>
             <div className="text-sm font-medium text-sky-100/90 mt-1">
-              Снегопад
+              Мороз и снегопад
             </div>
             <div className="text-xs text-white/60 font-medium mt-0.5">
-              Макс.: -2°, мин.: -8°
+              Макс.: -17°, мин.: -24°
             </div>
           </div>
         </div>
@@ -496,7 +496,7 @@ export const WeatherApp: React.FC<WeatherAppProps> = ({ onBack }) => {
             <div className="my-2">
               <div className="text-2xl font-bold text-white tracking-tight">88%</div>
               <div className="text-[11px] text-white/60 mt-1 leading-tight">
-                Точка росы -6° прямо сейчас.
+                Точка росы -22° прямо сейчас.
               </div>
             </div>
           </div>

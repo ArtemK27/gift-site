@@ -9,10 +9,12 @@ import {
   Copy,
   Check,
   Snowflake,
+  RotateCcw,
   X,
 } from 'lucide-react';
 import { vibrate, playTapSound, playUnlockSound, playScratchSound } from '../../utils/haptics';
 import { useSettings } from '../../context/SettingsContext';
+import { SafeBreachStage } from './SafeBreachStage';
 
 interface SafeAppProps {
   onBack: () => void;
@@ -38,18 +40,27 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
           const parsed = JSON.parse(raw);
           return {
             isUnlocked: Boolean(parsed.isUnlocked),
+            isBreachCompleted: Boolean(parsed.isBreachCompleted),
             isScratchedOff: Boolean(parsed.isScratchedOff),
             selectedGift: parsed.selectedGift || null,
           };
         }
       } catch {}
     }
-    return { isUnlocked: false, isScratchedOff: false, selectedGift: null };
+    return {
+      isUnlocked: false,
+      isBreachCompleted: false,
+      isScratchedOff: false,
+      selectedGift: null,
+    };
   };
 
   const initialSafe = loadStoredSafe();
   const [pin, setPin] = useState('');
   const [isUnlocked, setIsUnlocked] = useState<boolean>(initialSafe.isUnlocked);
+  const [isBreachCompleted, setIsBreachCompleted] = useState<boolean>(
+    initialSafe.isBreachCompleted
+  );
   const [isError, setIsError] = useState(false);
   const [scratchProgress, setScratchProgress] = useState(initialSafe.isScratchedOff ? 100 : 0);
   const [isScratchedOff, setIsScratchedOff] = useState<boolean>(initialSafe.isScratchedOff);
@@ -70,15 +81,16 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
     try {
       window.localStorage.setItem(
         SAFE_STORAGE_KEY,
-        JSON.stringify({ isUnlocked, isScratchedOff, selectedGift })
+        JSON.stringify({ isUnlocked, isBreachCompleted, isScratchedOff, selectedGift })
       );
     } catch {}
-  }, [isUnlocked, isScratchedOff, selectedGift]);
+  }, [isUnlocked, isBreachCompleted, isScratchedOff, selectedGift]);
 
   useEffect(() => {
     const onReset = () => {
       setPin('');
       setIsUnlocked(false);
+      setIsBreachCompleted(false);
       setIsScratchedOff(false);
       setScratchProgress(0);
       setSelectedGift(null);
@@ -99,11 +111,12 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
       const newPin = prevPin + num;
 
       if (newPin.length === 4) {
-        if (newPin === '2027') {
+        if (newPin === '2427' || newPin === '2027') {
           setTimeout(() => {
             vibrate([50, 100, 150]);
             playUnlockSound();
             setIsUnlocked(true);
+            setIsBreachCompleted(false);
           }, 300);
         } else {
           setTimeout(() => {
@@ -258,34 +271,9 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
       ctx.fill();
     }
 
-    // 7. Frosted Inner Border
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
-    ctx.lineWidth = 1.2;
-    ctx.strokeRect(10, 10, cssWidth - 20, cssHeight - 20);
-
-    // 8. Center Frosted Label
-    const centerX = cssWidth / 2;
-    const centerY = cssHeight / 2;
-
-    ctx.fillStyle = 'rgba(15, 17, 23, 0.76)';
-    ctx.beginPath();
-    ctx.roundRect(centerX - 130, centerY - 28, 260, 56, 14);
-    ctx.fill();
-
-    ctx.strokeStyle = 'rgba(226, 232, 240, 0.65)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(centerX - 130, centerY - 28, 260, 56, 14);
-    ctx.stroke();
-
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = '700 12px -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('❄️ ЗАМОРОЖЕННЫЙ ВАУЧЕР ❄️', centerX, centerY - 5);
-
-    ctx.fillStyle = 'rgba(226, 232, 240, 0.9)';
-    ctx.font = '500 11px -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('Сотри ледяной слой (минимум 80%)', centerX, centerY + 13);
+    // 7. Extra central frost crystal veins (no nested text container box on the ice!)
+    drawFrostBranch(cssWidth * 0.45, cssHeight * 0.42, 36, 0.4, 3);
+    drawFrostBranch(cssWidth * 0.55, cssHeight * 0.58, 36, -2.5, 3);
 
     const scratchAt = (clientX: number, clientY: number) => {
       const rect = canvas.getBoundingClientRect();
@@ -445,7 +433,7 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3.5 py-3 border-b border-white/10 bg-[#0b0c10]/90 backdrop-blur-xl z-20">
+      <div className="flex items-center justify-between px-3.5 py-3 border-b border-white/10 bg-[#0b0c10]/90 backdrop-blur-xl z-40">
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
@@ -460,12 +448,29 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
           <span className="text-base font-bold tracking-tight text-zinc-100">VIP Сейф 2027</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          {isUnlocked && isBreachCompleted && (
+            <button
+              type="button"
+              data-testid="replay-breach-btn"
+              onClick={() => {
+                vibrate(20);
+                playTapSound(480, 0.04);
+                setIsBreachCompleted(false);
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-zinc-200 border border-white/20 text-[10px] font-mono font-bold transition-all cursor-pointer"
+              title="Закрыть створки шлюза"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Шлюз</span>
+            </button>
+          )}
+
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] text-zinc-200 border border-white/20 text-[11px] font-mono tracking-wider">
             {isUnlocked ? (
               <>
                 <Unlock className="w-3 h-3 text-zinc-300" />
-                <span>ОТКРЫТО</span>
+                <span>{isBreachCompleted ? 'ОТКРЫТО' : 'ШЛЮЗ'}</span>
               </>
             ) : (
               <>
@@ -489,9 +494,9 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
         </div>
       </div>
 
-      {/* Screen Content: Keypad OR Top-Aligned Frosted Voucher Card -> Certificate Choice */}
+      {/* Screen Content: Keypad OR Full-Screen Titanium Blast Doors parting over Frosted Voucher */}
       <div
-        className={`flex-1 overflow-y-auto px-4 pb-8 flex flex-col items-center overscroll-contain touch-pan-y ${
+        className={`relative flex-1 overflow-y-auto px-4 pb-8 flex flex-col items-center overscroll-contain touch-pan-y ${
           !isUnlocked ? 'justify-center py-5' : 'justify-start pt-3.5'
         }`}
       >
@@ -568,20 +573,27 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
             </div>
           </div>
         ) : (
-          // ================= UNLOCKED: TOP-ALIGNED MONOCHROME FROST VOUCHER -> GIFT CARDS =================
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-            className="w-full max-w-[362px] flex flex-col items-center justify-start gap-3.5"
-          >
-            {/* 1. SINGLE FROSTED MATTE-GRAPHITE VOUCHER CARD (SHIFTED TO TOP) */}
+          // ================= UNLOCKED: FULL-SCREEN TITANIUM VAULT DOORS OVER FROSTED VOUCHER =================
+          <>
+            {!isBreachCompleted && (
+              <SafeBreachStage
+                onBreachComplete={() => setIsBreachCompleted(true)}
+              />
+            )}
+
             <motion.div
-              data-testid="vip-scratch-card"
-              animate={isScratchedOff ? { scale: [1, 1.015, 1] } : undefined}
-              transition={{ duration: 0.4 }}
-              className="w-full relative aspect-[1.82/1] rounded-[18px] p-[1px] bg-white/25 shadow-[0_18px_45px_rgba(0,0,0,0.85)] overflow-hidden"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+              className="w-full max-w-[362px] flex flex-col items-center justify-start gap-3.5"
             >
+              {/* 1. SINGLE FROSTED MATTE-GRAPHITE VOUCHER CARD (SHIFTED TO TOP) */}
+              <motion.div
+                data-testid="vip-scratch-card"
+                animate={isScratchedOff ? { scale: [1, 1.015, 1] } : undefined}
+                transition={{ duration: 0.4 }}
+                className="w-full relative aspect-[1.82/1] rounded-[18px] p-[1px] bg-white/25 shadow-[0_18px_45px_rgba(0,0,0,0.85)] overflow-hidden"
+              >
               {/* Matte Dark Graphite Voucher Card Underneath */}
               <div
                 className="w-full h-full rounded-[17px] bg-[#1a1c22] p-4 flex flex-col justify-between relative overflow-hidden"
@@ -604,9 +616,9 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
                 <Snowflake className="pointer-events-none absolute bottom-10 right-4 w-3.5 h-3.5 text-zinc-400/40" />
                 <Snowflake className="pointer-events-none absolute bottom-9 left-4 w-2.5 h-2.5 text-zinc-400/35" />
 
-                {/* Top Row: VOUCHER Pill + Barcode */}
+                {/* Top Row: VOUCHER Number + Barcode (Clean, no nested container pill) */}
                 <div className="relative z-10 flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-black/35 border border-white/20 text-[10px] font-mono tracking-wider text-zinc-200">
+                  <span className="text-[11px] font-mono tracking-wider text-zinc-300">
                     VOUCHER № <strong className="ml-1 text-white">2027-NY</strong>
                   </span>
 
@@ -720,13 +732,6 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
                   )}
                 </AnimatePresence>
 
-                {/* Subtle Scratch Progress Pill while scratching (< 80%) */}
-                {!isScratchedOff && scratchProgress > 0 && (
-                  <div className="pointer-events-none absolute bottom-2.5 right-3 z-30 px-2 py-0.5 rounded-full bg-black/75 border border-white/20 text-[10px] font-mono text-zinc-200">
-                    Стерто: {scratchProgress}% / 80%
-                  </div>
-                )}
-
                 {/* Live Flying Ice Crystals while scratching */}
                 <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
                   {sparks.map((sp) => (
@@ -747,13 +752,6 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
                 </div>
               </div>
             </motion.div>
-
-            {/* Hint under the card before 80% is scratched */}
-            {!isScratchedOff && (
-              <div className="text-[11px] font-mono text-zinc-400 text-center">
-                Сотри минимум 80% льда с карты ({scratchProgress}%), чтобы открыть выбор подарка
-              </div>
-            )}
 
             {/* 2. COLLECTOR GIFT CARDS: APPEAR ONLY AFTER >= 80% OF THE ICE IS SCRATCHED OFF */}
             <AnimatePresence>
@@ -986,6 +984,7 @@ export const SafeApp: React.FC<SafeAppProps> = ({ onBack }) => {
               )}
             </AnimatePresence>
           </motion.div>
+          </>
         )}
       </div>
 

@@ -3,7 +3,7 @@ import { setGlobalSound, setGlobalHaptics } from '../utils/haptics';
 import { QuestProgressState, formatCipherProgress } from '../components/apps/minesweeperLogic';
 
 export type WallpaperId = 'newyear' | 'sangwoo' | 'sisheng';
-export type QuestStepKey = 'committee' | 'notes' | 'minesweeper';
+export type QuestStepKey = 'committee' | 'notes' | 'minesweeper' | 'console_decrypt';
 
 export interface SettingsState {
   soundEnabled: boolean;
@@ -34,6 +34,7 @@ const DEFAULT_QUEST_PROGRESS: QuestProgressState = {
   committeeUnlocked: false,
   notesUnlocked: false,
   minesweeperUnlocked: false,
+  rootNoteDecrypted: false,
 };
 
 const getStoredSettings = (): SettingsState => {
@@ -68,6 +69,7 @@ export const getStoredQuestProgress = (): QuestProgressState => {
       committeeUnlocked: Boolean(parsed.committeeUnlocked),
       notesUnlocked: Boolean(parsed.notesUnlocked),
       minesweeperUnlocked: Boolean(parsed.minesweeperUnlocked),
+      rootNoteDecrypted: Boolean(parsed.rootNoteDecrypted),
     };
   } catch {
     return DEFAULT_QUEST_PROGRESS;
@@ -135,11 +137,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const unlockQuestStep = useCallback((step: QuestStepKey) => {
     setQuestProgress((prev) => {
-      const key =
+      const key: keyof QuestProgressState =
         step === 'committee'
           ? 'committeeUnlocked'
           : step === 'notes'
           ? 'notesUnlocked'
+          : step === 'console_decrypt'
+          ? 'rootNoteDecrypted'
           : 'minesweeperUnlocked';
       if (prev[key]) return prev;
       const next: QuestProgressState = { ...prev, [key]: true };
@@ -218,11 +222,13 @@ export const useSettings = (): SettingsContextType => {
     unlockQuestStep: (step: QuestStepKey) => {
       try {
         const current = getStoredQuestProgress();
-        const key =
+        const key: keyof QuestProgressState =
           step === 'committee'
             ? 'committeeUnlocked'
             : step === 'notes'
             ? 'notesUnlocked'
+            : step === 'console_decrypt'
+            ? 'rootNoteDecrypted'
             : 'minesweeperUnlocked';
         const next = { ...current, [key]: true };
         window.localStorage.setItem(QUEST_STORAGE_KEY, JSON.stringify(next));

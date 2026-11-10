@@ -11,7 +11,7 @@ import {
   formatCipherProgress,
   getNeighbors,
 } from './apps/minesweeperLogic';
-import { getUtc7TimeSnapshot } from '../utils/timeZoneUtils';
+import { getUtc10TimeSnapshot } from '../utils/timeZoneUtils';
 import { PAGE_0_APPS, PAGE_1_APPS } from './home/homeAppsData';
 
 test('formatTrackTime formats seconds into m:ss accurately', () => {
@@ -30,16 +30,23 @@ test('clampProgressPercent bounds progress between 0 and 100', () => {
   assert.equal(clampProgressPercent(-5, 120), 0);
 });
 
-test('getUtc7TimeSnapshot computes UTC+7 time and live 2027 forward counter', () => {
-  // 2026-12-31T17:00:05Z is 2027-01-01 00:00:05 in UTC+7
-  const exactMidnightUtc7 = new Date(Date.UTC(2026, 11, 31, 17, 0, 5));
-  const snap = getUtc7TimeSnapshot(exactMidnightUtc7);
+test('getUtc10TimeSnapshot computes UTC+10 time, countdown before 2027, and elapsed time in 2027', () => {
+  // 2026-12-31T14:00:05Z is 2027-01-01 00:00:05 in UTC+10
+  const exactMidnightUtc10 = new Date(Date.UTC(2026, 11, 31, 14, 0, 5));
+  const snap = getUtc10TimeSnapshot(exactMidnightUtc10);
   assert.equal(snap.hm, '00:00');
   assert.equal(snap.hms, '00:00:05');
+  assert.equal(snap.isNewYearReached, true);
   assert.equal(snap.elapsedIn2027Hms, '00:00:05');
+
+  // 2026-12-30T14:00:00Z is 2026-12-31 00:00:00 in UTC+10 (1 day before 2027)
+  const dayBeforeUtc10 = new Date(Date.UTC(2026, 11, 30, 14, 0, 0));
+  const beforeSnap = getUtc10TimeSnapshot(dayBeforeUtc10);
+  assert.equal(beforeSnap.isNewYearReached, false);
+  assert.equal(beforeSnap.countdown.days, 1);
 });
 
-test('formatCipherProgress progressively reveals 2027 from ????', () => {
+test('formatCipherProgress progressively reveals 2nd digit 4 and full cipher 2427 from ????', () => {
   assert.equal(
     formatCipherProgress({
       committeeUnlocked: false,
@@ -50,11 +57,19 @@ test('formatCipherProgress progressively reveals 2027 from ????', () => {
   );
   assert.equal(
     formatCipherProgress({
+      committeeUnlocked: false,
+      notesUnlocked: true,
+      minesweeperUnlocked: false,
+    }),
+    '?4??'
+  );
+  assert.equal(
+    formatCipherProgress({
       committeeUnlocked: true,
       notesUnlocked: false,
       minesweeperUnlocked: false,
     }),
-    '20??'
+    '2?2?'
   );
   assert.equal(
     formatCipherProgress({
@@ -62,7 +77,7 @@ test('formatCipherProgress progressively reveals 2027 from ????', () => {
       notesUnlocked: false,
       minesweeperUnlocked: true,
     }),
-    '20?7'
+    '2?27'
   );
   assert.equal(
     formatCipherProgress({
@@ -70,7 +85,7 @@ test('formatCipherProgress progressively reveals 2027 from ????', () => {
       notesUnlocked: true,
       minesweeperUnlocked: true,
     }),
-    '2027'
+    '2427'
   );
 });
 
@@ -117,3 +132,48 @@ test('Minesweeper app is placed on Page 2 (PAGE_1_APPS) and not Page 1 (PAGE_0_A
   assert.equal(PAGE_0_APPS.some((a) => a.id === 'minesweeper'), false);
   assert.equal(PAGE_1_APPS.some((a) => a.id === 'minesweeper'), true);
 });
+
+test('computeBreachKinematics computes 3-stage vault breach (0-35% Door, 35-70% Gears, 70-100% Lasers)', async () => {
+  const { computeBreachKinematics, computeAngleDeltaDeg } = await import('./apps/SafeBreachStage');
+
+  // Stage 1: Outer Vault Door (0% - 35%)
+  const at0 = computeBreachKinematics(0);
+  assert.equal(at0.activeStage, 1);
+  assert.equal(at0.wheelRotationDeg, 0);
+  assert.equal(at0.doorSplitProgress, 0);
+  assert.equal(at0.activeLasersCount, 9);
+
+  const at35 = computeBreachKinematics(35);
+  assert.equal(at35.activeStage, 2);
+  assert.equal(at35.wheelRotationDeg, 420);
+  assert.equal(at35.doorSplitProgress, 1);
+
+  // Stage 2: Dark-Metal Gears (35% - 70%)
+  const at64 = computeBreachKinematics(64);
+  assert.equal(at64.activeStage, 2);
+  assert.equal(at64.gearsAligned, true);
+  assert.equal(at64.gears.length, 21);
+
+  const at70 = computeBreachKinematics(70);
+  assert.equal(at70.activeStage, 3);
+  assert.equal(at70.gearSplitProgress, 1);
+
+  // Stage 3: Laser Barrier & Cryo-Chamber (70% - 100%)
+  const at82 = computeBreachKinematics(82);
+  assert.equal(at82.activeStage, 3);
+  assert.equal(at82.lasers[0].status, 'off');
+  assert.equal(at82.lasers[1].status, 'off');
+  assert.equal(at82.lasers[2].status, 'off');
+  assert.equal(at82.lasers[3].status, 'glitching');
+  assert.equal(at82.allLasersOff, false);
+
+  const at100 = computeBreachKinematics(100);
+  assert.equal(at100.activeStage, 3);
+  assert.equal(at100.activeLasersCount, 0);
+  assert.equal(at100.allLasersOff, true);
+  assert.equal(at100.isDoorsOpening, true);
+
+  assert.equal(Math.round(computeAngleDeltaDeg(0, Math.PI / 2)), 90);
+});
+
+

@@ -9,6 +9,7 @@ export type AppId =
   | 'clock'
   | 'weather'
   | 'minesweeper'
+  | 'console'
   | null;
 
 export interface NotificationItem {
